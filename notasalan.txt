@@ -1,0 +1,23 @@
+Registro
+
+    Usuario
+    Correo
+    Nacimiento
+    Foto opcional
+    Contraseña
+    Confirmar contraseña
+
+Iniciar sesión
+
+    Usuario o correo
+    Contraseña
+
+Página principal
+
+    Pestaña chats 
+    Pestaña chats en grupo
+    Perfil
+
+Perfil
+
+    
