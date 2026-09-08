@@ -1,0 +1,29 @@
+body {
+    background-color: #f8f9fa;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    color: #212529;
+}
+.usuario {
+    max-width: 400px;
+    margin: 0 auto;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+}
+.usuario img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin-bottom: 12px;
+}
+.editar-perfil-div {
+    max-width: 400px;
+    margin: 20px auto 0;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 20px;
+}
