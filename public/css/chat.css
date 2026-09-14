@@ -1,0 +1,32 @@
+body {
+    background-color: #f8f9fa; 
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    color: #212529; 
+}
+.usuario .titulo img {
+    object-fit: cover;
+}
+.chat .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.mensaje-recibido {
+    background-color: #e9ecef;
+    padding: 8px 12px;
+    border-radius: 12px;
+    max-width: 70%;
+    margin-bottom: 4px;
+}
+.mensaje-enviado {
+    background-color: #d1e7dd;
+    padding: 8px 12px;
+    border-radius: 12px;
+    max-width: 70%;
+    margin-left: auto;
+    margin-bottom: 4px;
+}
+.mensaje form input {
+    flex: 1;
+}
