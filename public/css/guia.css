@@ -1,0 +1,22 @@
+body {
+    background-color: #f8f9fa; 
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    color: #212529; 
+}
+.titulos h1 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+.titulos h3 {
+  font-size: 1.25rem;
+  color: #6c757d;
+}
+.mapa img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+.ubicaciones ul li {
+  font-size: 1rem;
+  line-height: 1.5;
+}

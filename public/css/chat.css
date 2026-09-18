@@ -30,3 +30,14 @@ body {
 .mensaje form input {
     flex: 1;
 }
+.tareas .titulos h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.tareas .contenido p {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+.tareas .registrar input {
+  flex: 1;
+}
