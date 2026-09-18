@@ -9,44 +9,70 @@
 </head>
 <body>
     <div id="chats"></div>
-    <div class="usuario card mb-3">
-        <div class="card-body d-flex align-items-center justify-content-between">
-            <div class="titulo d-flex align-items-center gap-2">
-                <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de usuario" class="rounded-circle" style="width:40px; height:40px;">
-                <img src="/public/img/online_status.png" style="width:12px; height:12px;">
-                <p class="fw-semibold mb-0">(título del chat grupal)</p>
-            </div>
-            <div class="funciones">
-                <button class="btn btn-outline-success btn-sm">Ver tareas</button>
-            </div>
-        </div>
-    </div>
-    <div class="chat card mb-3">
-        <div class="card-body">
-            <div class="mensaje"> <!--marcar distintos mensajes que envió el usuario, y que envíamos nosotros?-->
-                <p class="fw-semibold mb-1">(usuario 1)</p>
-                <p class="mensaje-recibido">Hola grupo como están :]</p>
-            </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="usuario card mb-3">
+                    <div class="card-body d-flex align-items-center justify-content-between">
+                        <div class="titulo d-flex align-items-center gap-2">
+                            <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de usuario" class="rounded-circle" style="width:40px; height:40px;">
+                            <img src="/public/img/online_status.png" style="width:12px; height:12px;">
+                            <p class="fw-semibold mb-0">(título del chat grupal)</p>
+                        </div>
+                        <div class="funciones">
+                            <a href="/public/guia.html"><button class="btn btn-outline-success btn-sm">Guía turística</button></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat card mb-3">
+                    <div class="card-body">
+                        <div class="mensaje"> <!--marcar distintos mensajes que envió el usuario, y que envíamos nosotros?-->
+                            <p class="fw-semibold mb-1">(usuario 1)</p>
+                            <p class="mensaje-recibido">Hola grupo como están :]</p>
+                        </div>
 
-            <div class="mensaje">
-                <p class="fw-semibold mb-1">(usuario 2)</p>
-                <p class="mensaje-recibido">Qué tareas hay pendientes hoy</p>
-            </div>
+                        <div class="mensaje">
+                            <p class="fw-semibold mb-1">(usuario 2)</p>
+                            <p class="mensaje-recibido">Qué tareas hay pendientes hoy</p>
+                        </div>
 
-            <div class="mensaje"> <!--imagen que el usuario llegó a adjuntar-->
-                <p class="fw-semibold mb-1">(usuario 2)</p>
-                <img src="/public/img/GUGR9hoWwAAiXa2.png" class="img-fluid rounded" style="max-width:200px;">
+                        <div class="mensaje"> <!--imagen que el usuario llegó a adjuntar-->
+                            <p class="fw-semibold mb-1">(usuario 2)</p>
+                            <img src="/public/img/GUGR9hoWwAAiXa2.png" class="img-fluid rounded" style="max-width:200px;">
+                        </div>
+                    </div>
+                </div>    
+                <div class="mensaje card">
+                    <div class="card-body d-flex flex-column gap-2">
+                        <form class="d-flex gap-2">
+                            <input type="text" class="form-control" placeholder="Escribe un mensaje...">
+                            <button type="submit" class="btn btn-success">Enviar</button>
+                        </form>
+                        <div class="acciones">
+                            <button class="btn btn-outline-success btn-sm">Adjuntar imagen</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>    
-    <div class="mensaje card">
-        <div class="card-body d-flex flex-column gap-2">
-            <form class="d-flex gap-2">
-                <input type="text" class="form-control" placeholder="Escribe un mensaje...">
-                <button type="submit" class="btn btn-success">Enviar</button>
-            </form>
-            <div class="acciones">
-                <button class="btn btn-outline-success btn-sm">Adjuntar imagen</button>
+            <div class="col-md-4">
+                <div class="tareas card">
+                    <div class="card-body">
+                        <div class="titulos mb-3">
+                            <h1>TAREAS</h1>
+                            <p>actividades pendientes</p>
+                        </div>
+                    </div>
+                    <div class="contenido mb-3"> <!--EL ADMIN LAS PODRÁ ELIMINAR O MARCAR COMO COMPLETAS-->
+                        <p>> Visitar barrio antiguo</p>
+                        <p>> Tomar fotografías</p>
+                    </div>
+                    <div class="registrar"> <!--EL ADMIN PUEDE REGISTRAR TAREAS-->
+                        <form class="d-flex gap-2">
+                            <input type="text" class="form-control" placeholder="Escribe una tarea nueva...">
+                            <button type="submit" class="btn btn-success">Publicar</button>
+                        </form>
+                    </div> 
+                </div>
             </div>
         </div>
     </div>
