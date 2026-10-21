@@ -13,9 +13,10 @@ export default sequelize.define('User', {
     unique: true,
     validate: { isEmail: true },
   },
-  pass: {
+  passwordHash: { //DEBE SER EL MISMO NOMBRE DEL CONTROLLER, Y EL CAMPO DE LA BASE DE DATOS
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'pass'
   },
   }, {
   tableName: 'users',
