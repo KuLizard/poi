@@ -35,4 +35,25 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error(error);
         }
     });
+
+    const botones = document.querySelectorAll(".btn-copiar");
+    botones.forEach(boton => {
+        boton.addEventListener("click", async function (event) {
+            navigator.permissions.query({ name: "clipboard-write" }).then((resultado) => {
+                if (resultado.state == "granted" || resultado.state == "prompt") {
+                    console.log("permiso activo, https://www.freecodecamp.org/espanol/news/como-copiar-texto-al-portapapeles-con-javascript/");
+                }
+            });
+
+            const span = this.parentElement.querySelector("span");
+            const texto = span.textContent;
+            try {
+                await navigator.clipboard.writeText(texto);
+                console.log("Copiado", texto);
+                console.warn("Hay que borrar el texto que se encuentra en el cuadro de busqueda antes de volver a copiar");
+            } catch (error) {
+                console.error("Error al copiar", error);
+            }
+        });
+    });
 });
