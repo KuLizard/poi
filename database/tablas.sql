@@ -1,0 +1,75 @@
+CREATE DATABASE IF NOT EXISTS proyectopoi;
+
+USE proyectopoi;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    pass VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS chats (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    tipo ENUM('privada', 'grupo') NOT NULL,
+    nombre VARCHAR(100) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS participants (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_chat INT UNSIGNED NOT NULL,
+    id_user INT UNSIGNED NOT NULL,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (id_chat, id_user),
+
+    FOREIGN KEY (id_chat)
+        REFERENCES chats(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (id_user)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_chat INT UNSIGNED NOT NULL,
+    id_user INT UNSIGNED NOT NULL,
+	content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (id_chat)
+        REFERENCES chats(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (id_user)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS places (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    service TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS tasks (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    content TEXT NOT NULL,
+    user_id INT UNSIGNED NOT NULL,
+    chat_id INT UNSIGNED NOT NULL,
+    estado ENUM('pendiente', 'completada')
+        NOT NULL DEFAULT 'pendiente',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id)
+        REFERENCES users(id),
+
+    FOREIGN KEY (chat_id)
+        REFERENCES chats(id)
+);
