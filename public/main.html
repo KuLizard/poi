@@ -1,104 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Main</title>
+    <title>Chats</title>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/public/css/main.css">
-    <link rel="stylesheet" href="/src/output.css">
+    <link rel="stylesheet" href="/poi/public/css/main.css">
+    <link rel="stylesheet" href="/poi/src/output.css">
 </head>
 <body>
-    <div class="barra-superior btn-group" role="group">
-        <button id="todos" class="btn btn-success">Todos</button>
-        <button id="grupos" class="btn btn-outline-success">Grupos</button>
-        <button id="sin-leer" class="btn btn-outline-success">Sin leer</button>
-    </div>
-    <div id="todos-div" class="todo list-group" style="display: block;">
-        <a href="/public/chat.html" class="list-group-item list-group-item-action d-flex align-items-center">
-            <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de usuario" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-            <img src="/public/img/online_status.png" class="rounded-circle me-2" style="width: 12px; height: 12px;">
-            <div class="flex-grow-1">
-                <strong>Alan Saucedo</strong>
-                <p class="mb-0 text-muted small">Este es el último mensaje envíado</p> <!-- aquí podríamos usar un id del usuario para abrir el chat correcto tipo: /public/chat.html?id=4 -->
-                <p class="indice">2</p> <!--modificar este número para indicar cuandos mensajes hay sin leer o modificar el estilo del chat a algo más resaltado-->
-            </div>
-        </a>
-        <a href="/public/chat.html" class="list-group-item list-group-item-action d-flex align-items-center">
-            <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de usuario" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-            <img src="/public/img/offline_status.png" class="rounded-circle me-2" style="width: 12px; height: 12px;">
-            <div class="flex-grow-1">
-                <strong>Manuel Estaño</strong>
-                <p class="mb-0 text-muted small">Este es el último mensaje envíado</p> <!-- aquí podríamos usar un id del usuario para abrir el chat correcto tipo: /public/chat.html?id=4 -->
-            </div>
-        </a>
-        <a href="/public/chat.html" class="list-group-item list-group-item-action d-flex align-items-center">
-            <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de usuario" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-            <img src="/public/img/offline_status.png" class="rounded-circle me-2" style="width: 12px; height: 12px;">
-            <div class="flex-grow-1">
-                <strong>Sofía Castillo</strong>
-                <p class="mb-0 text-muted small">Este es el último mensaje envíado</p> <!-- aquí podríamos usar un id del usuario para abrir el chat correcto tipo: /public/chat.html?id=4 -->
-            </div>
-        </a>
-        <a href="/public/chatgrupal.html" class="list-group-item list-group-item-action d-flex align-items-center">
-            <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de grupo" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-            <div class="flex-grow-1">
-                <strong>Grupo UANL</strong>
-                <p class="mb-0 text-muted small">Este es el último mensaje envíado</p> <!-- aquí podríamos usar un id del usuario para abrir el chat correcto tipo: /public/chat.html?id=4 -->
-            </div>
-        </a>
-        <a href="/public/chatgrupal.html" class="list-group-item list-group-item-action d-flex align-items-center">
-            <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de grupo" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-            <div class="flex-grow-1">
-                <strong>POI chat grupal</strong>
-                <p class="mb-0 text-muted small">Este es el último mensaje envíado</p> <!-- aquí podríamos usar un id del usuario para abrir el chat correcto tipo: /public/chat.html?id=4 -->
-            </div>
-        </a>
-        <a href="/public/chatgrupal.html" class="list-group-item list-group-item-action d-flex align-items-center">
-            <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de grupo" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-            <div class="flex-grow-1">
-                <strong>Amigos</strong>
-                <p class="mb-0 text-muted small">Este es el último mensaje envíado</p> <!-- aquí podríamos usar un id del usuario para abrir el chat correcto tipo: /public/chat.html?id=4 -->
-            </div>
-        </a>
+
+    <main class="container py-3">
+
+        <!-- Filtros de conversaciones -->
+        <div class="barra-superior btn-group w-100 mb-3"
+             role="group"
+             aria-label="Filtrar conversaciones">
+
+            <button id="todos" class="btn btn-success" type="button">
+                Todos
+            </button>
+
+            <button id="grupos" class="btn btn-outline-success" type="button">
+                Grupos
+            </button>
+
+            <button id="sin-leer" class="btn btn-outline-success" type="button">
+                Sin leer
+            </button>
         </div>
-    <div id="grupos-div" class="grupos list-group" style="display: none;">
-        <a href="/public/chatgrupal.html" class="list-group-item list-group-item-action d-flex align-items-center">
-            <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de grupo" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-            <div class="flex-grow-1">
-                <strong>Grupo UANL</strong>
-                <p class="mb-0 text-muted small">Este es el último mensaje envíado</p> <!-- aquí podríamos usar un id del usuario para abrir el chat correcto tipo: /public/chat.html?id=4 -->
-            </div>
-        </a>
-        <a href="/public/chatgrupal.html" class="list-group-item list-group-item-action d-flex align-items-center">
-            <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de grupo" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-            <div class="flex-grow-1">
-                <strong>POI chat grupal</strong>
-                <p class="mb-0 text-muted small">Este es el último mensaje envíado</p> <!-- aquí podríamos usar un id del usuario para abrir el chat correcto tipo: /public/chat.html?id=4 -->
-            </div>
-        </a>
-        <a href="/public/chatgrupal.html" class="list-group-item list-group-item-action d-flex align-items-center">
-            <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de grupo" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-            <div class="flex-grow-1">
-                <strong>Amigos</strong>
-                <p class="mb-0 text-muted small">Este es el último mensaje envíado</p> <!-- aquí podríamos usar un id del usuario para abrir el chat correcto tipo: /public/chat.html?id=4 -->
-            </div>
-        </a>
-    </div>
-    <div id="sin-leer-div" class="sin-leer list-group" style="display: none;">
-        <a href="/public/chat.html" class="list-group-item list-group-item-action d-flex align-items-center">
-            <img src="/public/img/GUGR9hoWwAAiXa2.png" alt="Icono de usuario" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-            <img src="/public/img/online_status.png" class="rounded-circle me-2" style="width: 12px; height: 12px;">
-            <div class="flex-grow-1">
-                <strong>Alan Saucedo</strong>
-                <p class="mb-0 text-muted small">Este es el último mensaje envíado</p> <!-- aquí podríamos usar un id del usuario para abrir el chat correcto tipo: /public/chat.html?id=4 -->
-                <p class="indice">2</p> <!--modificar este número para indicar cuandos mensajes hay sin leer o modificar el estilo del chat a algo más resaltado-->
-            </div>
-        </a>
-    </div>
+
+        <!-- Usuarios cargados desde MySQL -->
+        <section id="todos-div" class="todo list-group">
+            <p class="list-group-item text-muted mb-0">
+                Cargando usuarios...
+            </p>
+        </section>
+
+        <!-- Chats grupales -->
+        <section id="grupos-div"
+                 class="grupos list-group"
+                 style="display: none;">
+            <p class="list-group-item text-muted mb-0">
+                Todavía no hay grupos cargados.
+            </p>
+        </section>
+
+        <!-- Chats con mensajes sin leer -->
+        <section id="sin-leer-div"
+                 class="sin-leer list-group"
+                 style="display: none;">
+            <p class="list-group-item text-muted mb-0">
+                No hay mensajes sin leer.
+            </p>
+        </section>
+
+    </main>
+
+    <!-- Barra de navegación -->
     <div id="navbar"></div>
-    <script src="/public/js/navbar.js"></script>
-    <script src="/public/js/main.js"></script>
+
+    <script src="/poi/public/js/navbar.js"></script>
+    <script src="/poi/public/js/main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

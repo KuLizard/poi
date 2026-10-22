@@ -34,3 +34,16 @@ export async function login(req, res) {
 
   return res.json({ token: tokenFor(user), user: { id: user.id, email: user.email } });
 }
+
+export async function getUsers(req, res, next) {
+  try {
+    const users = await User.findAll({
+      attributes: ['id', 'username'],
+      order: [['username', 'ASC']],
+    });
+
+    return res.json(users);
+  } catch (error) {
+    next(error);
+  }
+}
