@@ -75,10 +75,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
+        
         socket.on('connect', () => {
             console.log('Conectado al chat:', socket.id);
             console.log('Usuario conectado:', usuarioActualId);
+
+            socket.emit(
+                'chat:history',
+                { recipientId: contactoId },
+                (respuesta) => {
+                    if (respuesta?.error) {
+                        console.error('Error al cargar historial:', respuesta.error);
+                        return;
+                    }
+
+                    const historial = respuesta?.messages ?? [];
+
+                    historial.forEach((mensaje) => {
+                        mostrarMensaje(mensaje);
+                    });
+
+                    console.log('Mensajes del historial:', historial.length);
+                }
+            );
         });
+
 
         socket.on('connect_error', (error) => {
             console.error('Error de conexión:', error.message);

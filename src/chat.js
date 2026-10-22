@@ -198,6 +198,90 @@ export function attachChat(server) {
       socket.data.userId = userId;
       socket.join(`user:${userId}`);
 
+      
+      // Cargar el historial de una conversación privada.
+      socket.on('chat:history', async (payload, ack) => {
+        if (typeof ack !== 'function') return;
+
+        const recipientId = Number(payload?.recipientId);
+
+        if (
+          !Number.isSafeInteger(recipientId) ||
+          recipientId < 1 ||
+          recipientId === userId
+        ) {
+          return ack({ error: 'Contacto no válido.' });
+        }
+
+        try {
+          const recipient = await User.findByPk(recipientId, {
+            attributes: ['id'],
+          });
+
+          if (!recipient) {
+            return ack({ error: 'Usuario no encontrado.' });
+          }
+
+          // Buscar los chats compartidos por ambos usuarios.
+          const [chatsUsuario, chatsContacto] = await Promise.all([
+            Participant.findAll({
+              where: { id_user: userId },
+              attributes: ['id_chat'],
+            }),
+            Participant.findAll({
+              where: { id_user: recipientId },
+              attributes: ['id_chat'],
+            }),
+          ]);
+
+          const idsContacto = new Set(
+            chatsContacto.map((p) => Number(p.id_chat))
+          );
+
+          const idsCompartidos = chatsUsuario
+            .map((p) => Number(p.id_chat))
+            .filter((id) => idsContacto.has(id));
+
+          if (idsCompartidos.length === 0) {
+            return ack({ messages: [] });
+          }
+
+          const chat = await Chat.findOne({
+            where: {
+              id: { [Op.in]: idsCompartidos },
+              tipo: 'privada',
+            },
+          });
+
+          if (!chat) {
+            return ack({ messages: [] });
+          }
+
+          const historial = await Message.findAll({
+            where: { id_chat: chat.id },
+            order: [
+              ['created_at', 'ASC'],
+              ['id', 'ASC'],
+            ],
+          });
+
+          const resultado = historial.map((mensaje) => ({
+            ...mensaje.toJSON(),
+            senderId: Number(mensaje.id_user),
+            recipientId:
+              Number(mensaje.id_user) === userId
+                ? recipientId
+                : userId,
+          }));
+
+          ack({ messages: resultado });
+        } catch (error) {
+          console.error('Error al cargar el historial:', error);
+          ack({ error: 'No se pudo cargar el historial.' });
+        }
+      });
+
+
       let windowStart = Date.now();
       let count = 0;
 
