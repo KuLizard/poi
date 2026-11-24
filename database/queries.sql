@@ -1,3 +1,5 @@
-DROP DATABASE proyectopoi;
+-- DROP DATABASE proyectopoi;
+
+USE proyectopoi;
 
 SELECT * FROM users;

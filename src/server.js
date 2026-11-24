@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import app from './app.js';
 import sequelize from './config/database.js';
 import { createServer } from 'node:http';
@@ -7,9 +8,6 @@ import User from './models/User.js';
 import Chat from './models/Chat.js';
 import Participant from './models/Participant.js';
 import Message from './models/Message.js';
-
-import dotenv from 'dotenv';
-dotenv.config();
 
 // Usuarios y chats
 User.belongsToMany(Chat, {

@@ -1,15 +1,11 @@
-// VALIDAR QUE LA CONTRASEÑA COINCIDA
-
 const formulario = document.getElementById('form-registro');
-const password = document.getElementById('password');
+const password = document.getElementById('pass');
 const confirmarPassword = document.getElementById('confirmar-password');
 
-// Comprobar las contraseñas mientras se escriben
+// Validar que ambas contraseñas coincidan
 function validarPassword() {
     if (confirmarPassword.value !== password.value) {
-        confirmarPassword.setCustomValidity(
-            'Las contraseñas no coinciden.'
-        );
+        confirmarPassword.setCustomValidity('Las contraseñas no coinciden.');
     } else {
         confirmarPassword.setCustomValidity('');
     }
@@ -18,8 +14,8 @@ function validarPassword() {
 password.addEventListener('input', validarPassword);
 confirmarPassword.addEventListener('input', validarPassword);
 
-// Validación temporal mientras todavía no conectamos el backend
-formulario.addEventListener('submit', function (event) {
+// Enviar el formulario al backend
+formulario.addEventListener('submit', async function (event) {
     event.preventDefault();
 
     validarPassword();
@@ -29,5 +25,27 @@ formulario.addEventListener('submit', function (event) {
         return;
     }
 
-    console.log('Formulario válido. Listo para conectar con el backend.');
+    const datos = new FormData(formulario);
+
+    try {
+        const respuesta = await fetch('/api/auth/register', {
+            method: 'POST',
+            body: datos
+        });
+
+        const resultado = await respuesta.json();
+        console.log('Respuesta del servidor:', resultado);
+
+        if (!respuesta.ok) {
+            alert(resultado.error || 'No se pudo completar el registro.');
+            return;
+        }
+
+        alert(resultado.mensaje || 'Usuario registrado correctamente.');
+        formulario.reset();
+
+    } catch (error) {
+        console.error('Error al registrar usuario:', error);
+        alert('No se pudo conectar con el servidor.');
+    }
 });
