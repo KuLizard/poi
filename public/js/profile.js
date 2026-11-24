@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    fetch("/public/html/navbar_second.html")
+    fetch("/html/navbar_second.html")
     .then(res => res.text())
     .then(data => {
         document.getElementById("chats").innerHTML = data;

@@ -1,15 +1,31 @@
 import express from 'express';
+
+import path from 'node:path';
+import { fileURLToPath } from 'node:url'; //estos dos también los agregué para entrar a la página pero ya me dices si está o no b ien 
+
 import cors from 'cors';
 import { UniqueConstraintError, ValidationError } from 'sequelize';
 import authRoutes from './routes/authRoutes.js';
+import lugareRutas from './routes/placesRouts.js';
+import tareas from './routes/taskRoutes.js';
 //import chatRoutes from './routes/chatRoutes.js';
 
 const app = express();
 
+const archivo = fileURLToPath(import.meta.url);
+const direccions = path.dirname(archivo);
+app.use(express.static(path.join(direccions, '../public'))); //estos los agregué porque no supe como entrar a la página así que me lo traje de mi otro pia de web
+
 app.use(cors({ origin: process.env.FRONTEND_ORIGIN || 'http://localhost' }));
 app.use(express.json({ limit: '10kb' }));
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 app.use('/api/auth', authRoutes);
+app.use(lugareRutas);
+app.use(tareas);
+
+
+
 //app.use('/api/chat', chatRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));

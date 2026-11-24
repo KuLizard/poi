@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const map = L.map('map').setView([25.6924701, -100.3262185], 10); //default mapa de monetrrey
+    const map = L.map('map').setView([25.6924701, -100.3262185], 10);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const respuesta = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(buscado)}`); //nos va a convertir la búsquda a coordenadas de mapa
+            const respuesta = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(buscado)}`);
             const datos = await respuesta.json();
             if (datos.length === 0) {
                 return;
@@ -32,16 +32,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function ubicaciones() {
         try {
-            const res = await fetch("la ruta de las ¿apis en el servidor (las que llamamos por postman) (./ubicaciones)");
+            const res = await fetch("/lugaresGuia");
             const ubis = await res.json();
             const listado = document.getElementById("ubicaciones");
             
             listado.innerHTML = "";
-            ubis.forEach(lugares => {
+            ubis.lugares.forEach(lugares => {
                 const elemetnoLista = document.createElement("li");
                 elemetnoLista.className = "list-group-item d-flex justify-content-between align-items-center"; 
                 elemetnoLista.innerHTML = `
-                    <span>${lugares.puntoInteres} (${lugares.categoria}), ${lugares.ubicacion} - ${lugares.servicio}</span>
+                    <span><strong>${lugares.nombre}.</strong> (${lugares.category})
+                        <br>${lugares.location} - ${lugares.service}.</span>
                     <button class="btn btn-outline-success btn-sm" data-id="${lugares.id}">Enviar a chat</button>
                 `;
                 listado.appendChild(elemetnoLista);

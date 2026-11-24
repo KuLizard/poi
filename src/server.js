@@ -8,6 +8,9 @@ import Chat from './models/Chat.js';
 import Participant from './models/Participant.js';
 import Message from './models/Message.js';
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 // Usuarios y chats
 User.belongsToMany(Chat, {
   through: Participant,

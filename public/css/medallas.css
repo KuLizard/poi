@@ -1,0 +1,6 @@
+.medallabloquea {
+    filter: grayscale(100%);
+}
+.medallaDESbloquea {
+    filter: grayscale(0%);
+}
