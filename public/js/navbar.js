@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    fetch('/poi/public/html/navbar.html')
+    fetch('/html/navbar.html')
     .then(res => res.text())
     .then(data => {
         document.getElementById("navbar").innerHTML = data;
