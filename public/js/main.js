@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     let socket = null;
     let usuarioActualId = null;
 
+    const contactosPorId = new Map();
+    const vistasPrevia = new Map();
+    console.log(vistasPrevia);
+
     function mostrarSeccion(activa, botonActivo) {
         [
             [todosbtn, todossection],
@@ -30,6 +34,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!indicador) return;
 
         indicador.src = online ? '/img/online_status.png' : '/img/offline_status.png';
+    }
+
+    function actualizarUltimoMensaje(contactoId, mensaje) {
+        const vistaPrevia = vistasPrevia.get(Number(contactoId));
+        const contacto = contactosPorId.get(Number(contactoId));
+
+        if (!vistaPrevia || !contacto) return;
+
+        const remitenteId = Number(mensaje.senderId ?? mensaje.id_user);
+        const remitente = remitenteId === usuarioActualId ? 'Tú' : contacto.username;
+
+        vistaPrevia.textContent = `${remitente}: ${mensaje.content}`;
     }
 
     function crearContacto(usuario) {
@@ -63,7 +79,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const ultimoMensaje = document.createElement('p');
         ultimoMensaje.className = 'mb-0 text-muted small';
-        ultimoMensaje.textContent = 'Conversación privada';
+        ultimoMensaje.textContent = 'Cargando conversación...';
+
+        contactosPorId.set(Number(usuario.id), usuario);
+        vistasPrevia.set(Number(usuario.id), ultimoMensaje);
 
         info.append(nombre, ultimoMensaje);
         enlace.append(avatar, estado, info);
@@ -95,6 +114,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const usuarios = await respuesta.json();
 
             todossection.replaceChildren();
+            contactosPorId.clear();
+            vistasPrevia.clear();
 
             const contactos = usuarios.filter(usuario => Number(usuario.id) !== usuarioActualId);
 
@@ -111,6 +132,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function cargarUltimosMensajes() {
+        contactosPorId.forEach((contacto, contactoId) => {
+            socket.emit('chat:history', { recipientId: contactoId }, respuesta => {
+                if (respuesta?.error) {
+                    console.error('Error al cargar último mensaje:', respuesta.error);
+                    return;
+                }
+
+                const historial = respuesta?.messages ?? [];
+                console.log('Contacto:', contactoId, 'Mensajes:', historial.length);
+
+                if (historial.length === 0) {
+                    const vistaPrevia = vistasPrevia.get(contactoId);
+                    console.log('Vista previa encontrada:', vistaPrevia);
+                    if (vistaPrevia) vistaPrevia.textContent = 'Inicia una conversación';
+                    return;
+                }
+
+                actualizarUltimoMensaje(contactoId, historial[historial.length - 1]);
+            });
+        });
+    }
+
     function conectarSocket() {
         if (!token) return;
 
@@ -120,6 +164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         socket.on('connect', () => {
             console.log('Conectado al servidor de presencia:', socket.id);
+            cargarUltimosMensajes();
         });
 
         socket.on('presence:initial', usuarios => {
@@ -131,6 +176,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         socket.on('presence:update', ({ userId, online }) => {
             actualizarEstado(userId, online);
             console.log(`Usuario ${userId}: ${online ? 'En línea' : 'Desconectado'}`);
+        });
+
+        socket.on('message:new', mensaje => {
+            const remitenteId = Number(mensaje.senderId ?? mensaje.id_user);
+            const destinatarioId = Number(mensaje.recipientId);
+
+            const contactoId = remitenteId === usuarioActualId ? destinatarioId : remitenteId;
+
+            actualizarUltimoMensaje(contactoId, mensaje);
         });
 
         socket.on('connect_error', error => {

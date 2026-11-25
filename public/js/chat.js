@@ -10,11 +10,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const token = sessionStorage.getItem('token');
 
     const fotoUsuario = document.getElementById('foto-usuario');
+    const estadoUsuario = document.getElementById('estado-usuario');
 
     let socket = null;
     let usuarioActualId = null;
 
     const mensajesMostrados = new Set();
+
+    function actualizarEstado(userId, online) {
+        if (Number(userId) !== contactoId) return;
+
+        estadoUsuario.src = online ? '/img/online_status.png' : '/img/offline_status.png';
+    }
 
     function mostrarMensaje(mensaje) {
         const remitenteId = Number(mensaje.senderId ?? mensaje.id_user);
@@ -75,6 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         nombreUsuario.textContent = contacto.username;
         fotoUsuario.src = contacto.image || '/img/GUGR9hoWwAAiXa2.png';
+        estadoUsuario.src = '/img/offline_status.png';
 
         socket = io('http://localhost:3000', {
             auth: { token }
@@ -99,12 +107,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
+        socket.on('presence:initial', usuarios => {
+            actualizarEstado(contactoId, usuarios.includes(contactoId));
+        });
+
+        socket.on('presence:update', ({ userId, online }) => {
+            actualizarEstado(userId, online);
+        });
+
         socket.on('connect_error', error => {
             console.error('Error de conexión:', error.message);
         });
 
         socket.on('disconnect', motivo => {
             console.log('Socket desconectado:', motivo);
+            estadoUsuario.src = '/img/offline_status.png';
         });
 
         socket.on('message:new', mensaje => {
