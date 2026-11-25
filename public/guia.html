@@ -50,8 +50,46 @@
 
             </div>
         </div>
-
     </div>
+
+
+    <div class="container my-4">
+        <div class="titulos text-center my-4">
+            <h3>Agregar lugares de interés nuevos</h3>
+        </div>
+        <div class="ubicaciones card">
+            <div class="card-body">
+                <div id="formularioSitios" class="text-center">
+
+                    <form id="formRegistrar" novalidate>
+                        <label for="nombre">Ingresa aquí el nombre del sitio: </label>
+                            <input type="text" id="nombre" name="nombre">
+                        
+                        <label for="tipo">Tipo: </label>
+                            <select id="tipo" name="tipo">
+                                <option value="parque">Parque</option>
+                                <option value="turismo">Turismo</option>
+                                <option value="museo">Museo</option>
+                                <option value="plaza">Plaza</option>
+                                <option value="historico">Histórico</option>
+                                <option value="religioso">Religioso</option>
+                                <option value="naturaleza">Naturaleza</option>
+                                <option value="gastronomico">Gastronomía</option>
+                                <option value="plazacomercial">Plaza comercial</option>
+                            </select>
+                        <label for="ubicaicon">Ubicación: </label>
+                            <input type="text" id="ubicaicon" name="ubicaicon">
+                        <label for="servicio">Servicios que otorga: </label>
+                            <input type="text" id="servicio" name="servicio">
+                        <button type="submit">Registrar</button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 
     <div id="navbar"></div>
 

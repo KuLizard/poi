@@ -3,13 +3,17 @@ import sequelize from '../config/database.js';
 
 export default sequelize.define('Place', {
     nombre: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        allowNull: false
     }, category: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        allowNull: false
     }, location: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        allowNull: false
     }, service: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        allowNull: false
     },
     }, 
     {
