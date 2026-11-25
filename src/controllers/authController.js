@@ -46,3 +46,15 @@ export async function getUsers(req, res, next) {
     next(error);
   }
 }
+
+export async function getCurrentUser(req, res) {
+    const user = await User.findByPk(req.userId, {
+        attributes: ['id', 'username', 'email', 'image']
+    });
+
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.json({ user });
+}

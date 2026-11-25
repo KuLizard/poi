@@ -1,55 +1,39 @@
-document.addEventListener("DOMContentLoaded", () => {
+const formulario = document.getElementById('formLogin');
+const usuarioEmail = document.getElementById('usuarioemail');
+const password = document.getElementById('password');
+const alerta = document.getElementById('alerta');
 
-    const alerta = document.getElementById("alerta");
-    const usuariooemail = document.getElementById("usuarioemail"); 
-    const contrasena = document.getElementById("password");
+// Iniciar sesión
+formulario.addEventListener('submit', async function (event) {
+    event.preventDefault();
 
-    document.getElementById("formLogin").addEventListener("submit", async function (e) {
-        e.preventDefault();
+    alerta.textContent = '';
 
-        if (usuariooemail.value.trim() === "" || contrasena.value.trim() === "") {
-            alerta.innerHTML = "";
-            alerta.textContent = "Por favor, revise sus datos.";
-        } else {
+    const datos = {
+        email: usuarioEmail.value.trim(),
+        pass: password.value
+    };
 
-            try {
+    try {
+        const respuesta = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
 
-                /*
+        const resultado = await respuesta.json();
 
-                const res = await fetch("/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        correo: usuariooemail.value.trim(),
-                        password: contrasena.value
-                    }),
-                });
-
-
-                if (res.ok) {
-                    const data = await res.json();
-                    localStorage.setItem("user", JSON.stringify(data.user));
-                    localStorage.setItem("token", data.accessToken);
-                    localStorage.setItem("medallas", JSON.stringify([]));
-                    window.location.href = "guia.html";
-                } else {
-                    alerta.innerHTML = "";
-                    alerta.textContent = "Uno o más datos es´tan mal.";
-                }
-
-                */
-
-
-            } catch(error) {
-                console.error(error);
-            }
-
-
+        if (!respuesta.ok) {
+            alerta.textContent = resultado.error || 'No se pudo iniciar sesión.';
+            return;
         }
 
+        localStorage.setItem('token', resultado.token);
 
+        window.location.href = '/main.html';
 
-    })
-
-
+    } catch (error) {
+        console.error('Error al iniciar sesión:', error);
+        alerta.textContent = 'No se pudo conectar con el servidor.';
+    }
 });
