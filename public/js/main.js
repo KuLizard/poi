@@ -1,25 +1,21 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const todosbtn = document.getElementById('todos');
     const grupobtn = document.getElementById('grupos');
-    const sinleerbtn = document.getElementById('sin-leer');
 
     const todossection = document.getElementById('todos-div');
     const gruposection = document.getElementById('grupos-div');
-    const sinleersection = document.getElementById('sin-leer-div');
 
     const token = sessionStorage.getItem('token');
     let socket = null;
     let usuarioActualId = null;
 
     const contactosPorId = new Map();
-    const vistasPrevia = new Map();
-    console.log(vistasPrevia);
+    const vistasPrevias = new Map();
 
     function mostrarSeccion(activa, botonActivo) {
         [
             [todosbtn, todossection],
             [grupobtn, gruposection],
-            [sinleerbtn, sinleersection],
         ].forEach(([boton, seccion]) => {
             const seleccionada = seccion === activa;
             seccion.style.display = seleccionada ? 'block' : 'none';
@@ -37,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function actualizarUltimoMensaje(contactoId, mensaje) {
-        const vistaPrevia = vistasPrevia.get(Number(contactoId));
+        const vistaPrevia = vistasPrevias.get(Number(contactoId));
         const contacto = contactosPorId.get(Number(contactoId));
 
         if (!vistaPrevia || !contacto) return;
@@ -82,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ultimoMensaje.textContent = 'Cargando conversación...';
 
         contactosPorId.set(Number(usuario.id), usuario);
-        vistasPrevia.set(Number(usuario.id), ultimoMensaje);
+        vistasPrevias.set(Number(usuario.id), ultimoMensaje);
 
         info.append(nombre, ultimoMensaje);
         enlace.append(avatar, estado, info);
@@ -115,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             todossection.replaceChildren();
             contactosPorId.clear();
-            vistasPrevia.clear();
+            vistasPrevias.clear();
 
             const contactos = usuarios.filter(usuario => Number(usuario.id) !== usuarioActualId);
 
@@ -141,11 +137,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 const historial = respuesta?.messages ?? [];
-                console.log('Contacto:', contactoId, 'Mensajes:', historial.length);
 
                 if (historial.length === 0) {
-                    const vistaPrevia = vistasPrevia.get(contactoId);
-                    console.log('Vista previa encontrada:', vistaPrevia);
+                    const vistaPrevia = vistasPrevias.get(contactoId);
                     if (vistaPrevia) vistaPrevia.textContent = 'Inicia una conversación';
                     return;
                 }
@@ -203,13 +197,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     grupobtn.addEventListener('click', () => {
         mostrarSeccion(gruposection, grupobtn);
     });
-
-    sinleerbtn.addEventListener('click', () => {
-        mostrarSeccion(sinleersection, sinleerbtn);
-    });
-
-    gruposection.replaceChildren();
-    sinleersection.replaceChildren();
 
     mostrarSeccion(todossection, todosbtn);
 

@@ -14,10 +14,8 @@
 
         <!-- Filtros de conversaciones -->
         <div class="barra-superior btn-group w-100 mb-3" role="group" aria-label="Filtrar conversaciones">
-
             <button id="todos" class="btn btn-success" type="button">Todos</button>
             <button id="grupos" class="btn btn-outline-success" type="button">Grupos</button>
-            <button id="sin-leer" class="btn btn-outline-success" type="button">Sin leer</button>
         </div>
 
         <!-- Usuarios cargados desde MySQL -->
@@ -26,13 +24,16 @@
         </section>
 
         <!-- Chats grupales -->
-        <section id="grupos-div" class="grupos list-group" style="display: none;">
-            <p class="list-group-item text-muted mb-0">Todavía no hay grupos cargados.</p>
-        </section>
+        <section id="grupos-div" style="display: none;">
+            <div class="mb-3">
+                <button id="crear-grupo" class="btn btn-success w-100" type="button">
+                    <i class="bi bi-plus-circle"></i> Crear grupo
+                </button>
+            </div>
 
-        <!-- Chats con mensajes sin leer -->
-        <section id="sin-leer-div" class="sin-leer list-group" style="display: none;">
-            <p class="list-group-item text-muted mb-0">No hay mensajes sin leer.</p>
+            <div id="lista-grupos" class="grupos list-group">
+                <p class="list-group-item text-muted mb-0">Todavía no hay grupos cargados.</p>
+            </div>
         </section>
 
     </main>
