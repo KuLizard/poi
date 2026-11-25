@@ -16,6 +16,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const botonAdjuntar = document.getElementById('btn-adjuntar');
 
+    // Elementos de videollamada.
+    const modalVideollamada = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalVideollamada'));
+    const tituloVideollamada = document.getElementById('tituloVideollamada');
+    const videoRemoto = document.getElementById('video-remoto');
+    const videoLocal = document.getElementById('video-local');
+    const controlesLlamada = document.getElementById('controles-llamada');
+    const llamadaEntrante = document.getElementById('llamada-entrante');
+    const textoLlamadaEntrante = document.getElementById('textoLlamadaEntrante');
+
+    const btnMicrofono = document.getElementById('btnMicrofono');
+    const btnCamara = document.getElementById('btnCamara');
+    const btnColgar = document.getElementById('btnColgar');
+    const btnCerrarVideollamada = document.getElementById('btnCerrarVideollamada');
+    const btnAceptarLlamada = document.getElementById('btnAceptarLlamada');
+    const btnRechazarLlamada = document.getElementById('btnRechazarLlamada');
+
     const params = new URLSearchParams(window.location.search);
     const contactoId = Number(params.get('id'));
     const grupoId = Number(params.get('groupId'));
@@ -25,6 +41,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let socket = null;
     let usuarioActualId = null;
+
+    // Variables de videollamada.
+    let peer = null;
+    let llamadaPeer = null;
+    let llamadaPeerPendiente = null;
+    let streamLocal = null;
+    let callIdActual = null;
+    let peerRemotoId = null;
+    let llamadaAceptada = false;
+    let llamadaIniciada = false;
 
     const mensajesMostrados = new Set();
 
@@ -118,13 +144,261 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Obtener cámara y micrófono.
+    async function obtenerMedios() {
+        if (streamLocal) return streamLocal;
+
+        if (!navigator.mediaDevices?.getUserMedia) {
+            throw new Error('Tu navegador no permite acceder a la cámara y al micrófono.');
+        }
+
+        streamLocal = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: true
+        });
+
+        videoLocal.srcObject = streamLocal;
+
+        return streamLocal;
+    }
+
+    // Liberar cámara y micrófono.
+    function liberarMedios() {
+        if (streamLocal) {
+            streamLocal.getTracks().forEach(track => track.stop());
+            streamLocal = null;
+        }
+
+        videoLocal.srcObject = null;
+        videoRemoto.srcObject = null;
+    }
+
+    // Restablecer interfaz de videollamada.
+    function limpiarVideollamada() {
+        if (llamadaPeer) {
+            llamadaPeer.close();
+            llamadaPeer = null;
+        }
+
+        if (llamadaPeerPendiente && llamadaPeerPendiente !== llamadaPeer) {
+            llamadaPeerPendiente.close();
+            llamadaPeerPendiente = null;
+        }
+
+        liberarMedios();
+
+        callIdActual = null;
+        peerRemotoId = null;
+        llamadaAceptada = false;
+        llamadaIniciada = false;
+
+        controlesLlamada.style.display = 'none';
+        llamadaEntrante.style.display = 'none';
+
+        btnAceptarLlamada.disabled = false;
+        btnRechazarLlamada.disabled = false;
+        btnColgar.disabled = false;
+
+        btnMicrofono.textContent = 'Micrófono';
+        btnCamara.textContent = 'Cámara';
+
+        modalVideollamada.hide();
+    }
+
+    // Mostrar los videos cuando llega el flujo remoto.
+    function configurarLlamada(llamada) {
+        llamadaPeer = llamada;
+
+        llamada.on('stream', stream => {
+            videoRemoto.srcObject = stream;
+            controlesLlamada.style.display = 'flex';
+            llamadaEntrante.style.display = 'none';
+
+            socket.emit('call:connected', { callId: callIdActual }, respuesta => {
+                if (respuesta?.error) console.error(respuesta.error);
+            });
+        });
+
+        llamada.on('close', () => {
+            if (callIdActual) limpiarVideollamada();
+        });
+
+        llamada.on('error', error => {
+            console.error('Error en la conexión PeerJS:', error);
+            alert('Se perdió la conexión de la videollamada.');
+            finalizarLlamada();
+        });
+    }
+
+    // Registrar PeerJS en el servidor.
+    function registrarPeer() {
+        if (!socket?.connected || peer) return;
+
+        socket.timeout(5000).emit('call:register', {}, (error, respuesta) => {
+            if (error || respuesta?.error) {
+                console.error('No se pudo registrar PeerJS:', error || respuesta.error);
+                return;
+            }
+
+            peer = new Peer(respuesta.peerId);
+
+            peer.on('open', peerId => {
+                socket.timeout(5000).emit('call:ready', { peerId }, (error, resultado) => {
+                    if (error || resultado?.error) {
+                        console.error('No se pudo preparar PeerJS:', error || resultado.error);
+                        peer.destroy();
+                        peer = null;
+                        return;
+                    }
+
+                    console.log('Videollamadas disponibles. Peer:', peerId);
+                });
+            });
+
+            peer.on('call', llamada => {
+                llamadaPeerPendiente = llamada;
+
+                if (llamadaAceptada && streamLocal) {
+                    llamada.answer(streamLocal);
+                    configurarLlamada(llamada);
+                    llamadaPeerPendiente = null;
+                }
+            });
+
+            peer.on('error', error => {
+                console.error('Error de PeerJS:', error);
+            });
+        });
+    }
+
+    // Iniciar una videollamada.
+    async function iniciarVideollamada() {
+        if (!socket?.connected || !peer?.open) {
+            alert('El sistema de videollamadas todavía no está listo.');
+            return;
+        }
+
+        if (callIdActual) {
+            alert('Ya tienes una llamada en curso.');
+            return;
+        }
+
+        try {
+            await obtenerMedios();
+
+            callIdActual = crypto.randomUUID();
+            llamadaIniciada = true;
+
+            tituloVideollamada.textContent = 'Llamando...';
+            controlesLlamada.style.display = 'flex';
+            llamadaEntrante.style.display = 'none';
+
+            modalVideollamada.show();
+
+            socket.timeout(5000).emit('call:invite', { callId: callIdActual, recipientId: contactoId }, (error, respuesta) => {
+                if (error || respuesta?.error) {
+                    alert(respuesta?.error || 'No se pudo enviar la invitación.');
+                    limpiarVideollamada();
+                    return;
+                }
+
+                console.log('Invitación enviada:', respuesta.callId);
+            });
+        } catch (error) {
+            console.error('No se pudo iniciar la videollamada:', error);
+            alert(error.message || 'No se pudo acceder a la cámara y al micrófono.');
+            limpiarVideollamada();
+        }
+    }
+
+    // Aceptar una videollamada entrante.
+    async function aceptarVideollamada() {
+        if (!callIdActual || !socket?.connected) return;
+
+        btnAceptarLlamada.disabled = true;
+
+        try {
+            await obtenerMedios();
+
+            socket.timeout(5000).emit('call:accept', { callId: callIdActual }, (error, respuesta) => {
+                if (error || respuesta?.error) {
+                    alert(respuesta?.error || 'No se pudo aceptar la llamada.');
+                    limpiarVideollamada();
+                    return;
+                }
+
+                llamadaAceptada = true;
+                llamadaEntrante.style.display = 'none';
+                controlesLlamada.style.display = 'flex';
+                tituloVideollamada.textContent = 'Videollamada';
+
+                if (llamadaPeerPendiente) {
+                    llamadaPeerPendiente.answer(streamLocal);
+                    configurarLlamada(llamadaPeerPendiente);
+                    llamadaPeerPendiente = null;
+                }
+            });
+        } catch (error) {
+            console.error('No se pudo acceder a la cámara:', error);
+            alert(error.message || 'Necesitas permitir el acceso a la cámara y al micrófono.');
+            btnAceptarLlamada.disabled = false;
+        }
+    }
+
+    // Rechazar una videollamada entrante.
+    function rechazarVideollamada() {
+        if (!callIdActual) return;
+
+        socket.emit('call:reject', { callId: callIdActual }, respuesta => {
+            if (respuesta?.error) console.error(respuesta.error);
+            limpiarVideollamada();
+        });
+    }
+
+    // Finalizar una videollamada.
+    function finalizarLlamada() {
+        if (callIdActual && socket?.connected) {
+            socket.emit('call:end', { callId: callIdActual }, respuesta => {
+                if (respuesta?.error) console.error(respuesta.error);
+                limpiarVideollamada();
+            });
+        } else {
+            limpiarVideollamada();
+        }
+    }
+
+    // Activar o desactivar micrófono.
+    btnMicrofono.addEventListener('click', () => {
+        const pista = streamLocal?.getAudioTracks()[0];
+
+        if (!pista) return;
+
+        pista.enabled = !pista.enabled;
+        btnMicrofono.textContent = pista.enabled ? 'Micrófono' : 'Activar micrófono';
+    });
+
+    // Activar o desactivar cámara.
+    btnCamara.addEventListener('click', () => {
+        const pista = streamLocal?.getVideoTracks()[0];
+
+        if (!pista) return;
+
+        pista.enabled = !pista.enabled;
+        btnCamara.textContent = pista.enabled ? 'Cámara' : 'Activar cámara';
+    });
+
+    btnColgar.addEventListener('click', finalizarLlamada);
+    btnCerrarVideollamada.addEventListener('click', finalizarLlamada);
+    btnAceptarLlamada.addEventListener('click', aceptarVideollamada);
+    btnRechazarLlamada.addEventListener('click', rechazarVideollamada);
+
     try {
         if (!token) {
             window.location.replace('/login.html');
             return;
         }
 
-        const respuestaUsuario = await fetch('http://localhost:3000/api/auth/me', {
+        const respuestaUsuario = await fetch('/api/auth/me', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -144,7 +418,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            const respuestaGrupo = await fetch(`http://localhost:3000/api/chat/groups/${grupoId}`, {
+            const respuestaGrupo = await fetch(`/api/chat/groups/${grupoId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -170,16 +444,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 modalParticipantes.show();
             });
 
-            socket = io('http://localhost:3000', {
+            socket = io({
                 auth: { token }
             });
 
-            // Estado inicial de los participantes.
             socket.on('presence:initial', usuarios => {
                 usuarios.forEach(userId => actualizarEstadoParticipante(userId, true));
             });
 
-            // Actualizar cuando alguien se conecta o desconecta.
             socket.on('presence:update', ({ userId, online }) => {
                 actualizarEstadoParticipante(userId, online);
             });
@@ -247,7 +519,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
 
-            // Los archivos todavía no se habilitan en grupos.
             botonAdjuntar.disabled = true;
 
             return;
@@ -259,7 +530,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        const respuestaUsuarios = await fetch('http://localhost:3000/api/auth/users');
+        const respuestaUsuarios = await fetch('/api/auth/users');
 
         if (!respuestaUsuarios.ok) throw new Error('No se pudieron cargar los usuarios');
 
@@ -279,7 +550,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         botonTareas.style.display = 'none';
         botonVideollamada.textContent = 'Videollamada';
 
-        socket = io('http://localhost:3000', {
+        socket = io({
             auth: { token }
         });
 
@@ -300,6 +571,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 console.log('Mensajes del historial:', respuesta?.messages?.length ?? 0);
             });
+
+            registrarPeer();
         });
 
         socket.on('presence:initial', usuarios => {
@@ -317,11 +590,69 @@ document.addEventListener('DOMContentLoaded', async () => {
         socket.on('disconnect', motivo => {
             console.log('Socket desconectado:', motivo);
             estadoUsuario.src = '/img/offline_status.png';
+
+            if (callIdActual) limpiarVideollamada();
+
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
         });
 
         socket.on('message:new', mensaje => {
             mostrarMensaje(mensaje);
         });
+
+        // Invitación de videollamada entrante.
+        socket.on('call:incoming', datos => {
+            if (callIdActual) {
+                socket.emit('call:reject', { callId: datos.callId }, () => {});
+                return;
+            }
+
+            callIdActual = datos.callId;
+            peerRemotoId = datos.callerPeerId;
+            llamadaAceptada = false;
+            llamadaIniciada = false;
+
+            textoLlamadaEntrante.textContent = `Videollamada entrante de ${datos.caller.email}`;
+            tituloVideollamada.textContent = 'Videollamada entrante';
+
+            controlesLlamada.style.display = 'none';
+            llamadaEntrante.style.display = 'block';
+
+            modalVideollamada.show();
+        });
+
+        // La otra persona aceptó nuestra invitación.
+        socket.on('call:accepted', async datos => {
+            if (datos.callId !== callIdActual || !llamadaIniciada) return;
+
+            peerRemotoId = datos.recipientPeerId;
+            llamadaAceptada = true;
+
+            try {
+                tituloVideollamada.textContent = 'Videollamada';
+
+                const llamada = peer.call(peerRemotoId, streamLocal);
+                configurarLlamada(llamada);
+            } catch (error) {
+                console.error('No se pudo establecer la llamada:', error);
+                finalizarLlamada();
+            }
+        });
+
+        // El servidor notifica que la llamada terminó.
+        socket.on('call:ended', datos => {
+            if (datos.callId !== callIdActual) return;
+
+            console.log('Videollamada finalizada:', datos.reason);
+            limpiarVideollamada();
+
+            if (datos.reason) alert(datos.reason);
+        });
+
+        botonVideollamada.addEventListener('click', iniciarVideollamada);
 
         formulario.addEventListener('submit', evento => {
             evento.preventDefault();

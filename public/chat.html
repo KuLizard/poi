@@ -91,8 +91,42 @@
         </div>
     </footer>
 
+    <div class="modal fade" id="modalVideollamada" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="tituloVideollamada">Videollamada</h5>
+                    <button type="button" class="btn-close btn-close-white" id="btnCerrarVideollamada" aria-label="Cerrar"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <video id="video-remoto" autoplay playsinline class="w-100 rounded bg-secondary"></video>
+                        </div>
+
+                        <video id="video-local" autoplay muted playsinline style="display: none;"></video>
+                    </div>
+
+                    <div id="controles-llamada" class="d-flex justify-content-center gap-2 mt-4">
+                        <button id="btnMicrofono" class="btn btn-outline-light">Micrófono</button>
+                        <button id="btnCamara" class="btn btn-outline-light">Cámara</button>
+                        <button id="btnColgar" class="btn btn-danger">Colgar</button>
+                    </div>
+
+                    <div id="llamada-entrante" class="text-center mt-3" style="display: none;">
+                        <p id="textoLlamadaEntrante">Llamada entrante...</p>
+                        <button id="btnAceptarLlamada" class="btn btn-success">Aceptar</button>
+                        <button id="btnRechazarLlamada" class="btn btn-danger">Rechazar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
     <script src="/js/chat.js"></script>
     <script src="/js/guia.js"></script>
 
