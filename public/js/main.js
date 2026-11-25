@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const gruposection = document.getElementById('grupos-div');
     const sinleersection = document.getElementById('sin-leer-div');
 
+    const token = sessionStorage.getItem('token');
+    let socket = null;
+    let usuarioActualId = null;
+
     function mostrarSeccion(activa, botonActivo) {
         [
             [todosbtn, todossection],
@@ -20,24 +24,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    function actualizarEstado(userId, online) {
+        const indicador = document.querySelector(`[data-status-user="${userId}"]`);
+
+        if (!indicador) return;
+
+        indicador.src = online ? '/img/online_status.png' : '/img/offline_status.png';
+    }
+
     function crearContacto(usuario) {
         const enlace = document.createElement('a');
-        enlace.href = `/poi/public/chat.html?id=${usuario.id}`;
-        enlace.className =
-            'list-group-item list-group-item-action d-flex align-items-center';
+        enlace.href = `/chat.html?id=${usuario.id}`;
+        enlace.className = 'list-group-item list-group-item-action d-flex align-items-center';
         enlace.dataset.chatType = 'privada';
         enlace.dataset.userId = usuario.id;
         enlace.dataset.unread = '0';
 
         const avatar = document.createElement('img');
-        avatar.src = '/poi/public/img/GUGR9hoWwAAiXa2.png';
+        avatar.src = usuario.image || '/img/GUGR9hoWwAAiXa2.png';
         avatar.alt = `Foto de ${usuario.username}`;
         avatar.className = 'rounded-circle me-2';
         avatar.width = 40;
         avatar.height = 40;
 
         const estado = document.createElement('img');
-        estado.src = '/poi/public/img/offline_status.png';
+        estado.src = '/img/offline_status.png';
         estado.alt = 'Estado de conexión';
         estado.className = 'status-indicator me-2';
         estado.width = 12;
@@ -62,6 +73,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function cargarUsuarios() {
         try {
+            const respuestaActual = await fetch('http://localhost:3000/api/auth/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!respuestaActual.ok) {
+                sessionStorage.removeItem('token');
+                window.location.replace('/login.html');
+                return;
+            }
+
+            const resultadoActual = await respuestaActual.json();
+            usuarioActualId = Number(resultadoActual.user.id);
+
             const respuesta = await fetch('http://localhost:3000/api/auth/users');
 
             if (!respuesta.ok) {
@@ -72,18 +96,50 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             todossection.replaceChildren();
 
-            usuarios.forEach((usuario) => {
+            const contactos = usuarios.filter(usuario => Number(usuario.id) !== usuarioActualId);
+
+            contactos.forEach(usuario => {
                 todossection.appendChild(crearContacto(usuario));
             });
 
-            if (usuarios.length === 0) {
-                todossection.textContent = 'Todavía no hay usuarios registrados.';
+            if (contactos.length === 0) {
+                todossection.textContent = 'Todavía no hay otros usuarios registrados.';
             }
         } catch (error) {
             console.error('Error al cargar usuarios:', error);
-            todossection.textContent =
-                'No se pudieron cargar los usuarios. Revisa que el servidor esté funcionando.';
+            todossection.textContent = 'No se pudieron cargar los usuarios. Revisa que el servidor esté funcionando.';
         }
+    }
+
+    function conectarSocket() {
+        if (!token) return;
+
+        socket = io('http://localhost:3000', {
+            auth: { token }
+        });
+
+        socket.on('connect', () => {
+            console.log('Conectado al servidor de presencia:', socket.id);
+        });
+
+        socket.on('presence:initial', usuarios => {
+            document.querySelectorAll('[data-status-user]').forEach(indicador => {
+                actualizarEstado(indicador.dataset.statusUser, usuarios.includes(Number(indicador.dataset.statusUser)));
+            });
+        });
+
+        socket.on('presence:update', ({ userId, online }) => {
+            actualizarEstado(userId, online);
+            console.log(`Usuario ${userId}: ${online ? 'En línea' : 'Desconectado'}`);
+        });
+
+        socket.on('connect_error', error => {
+            console.error('Error de conexión de presencia:', error.message);
+        });
+
+        socket.on('disconnect', motivo => {
+            console.log('Desconectado del servidor de presencia:', motivo);
+        });
     }
 
     todosbtn.addEventListener('click', () => {
@@ -98,10 +154,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         mostrarSeccion(sinleersection, sinleerbtn);
     });
 
-    // Sin datos reales del Backend
     gruposection.replaceChildren();
     sinleersection.replaceChildren();
 
     mostrarSeccion(todossection, todosbtn);
+
+    if (!token) {
+        window.location.replace('/login.html');
+        return;
+    }
+
     await cargarUsuarios();
+    conectarSocket();
 });

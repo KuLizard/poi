@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         contenedor.innerHTML = html;
 
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token');
 
         // Obtener los datos del usuario autenticado
         if (token) {
@@ -24,14 +24,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     document.getElementById('foto-usuario').src = resultado.user.image;
                 }
             } else if (respuesta.status === 401) {
-                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
             }
         }
 
         // Cerrar sesión
         document.getElementById('cerrar-sesion')?.addEventListener('click', (event) => {
             event.preventDefault();
-            localStorage.removeItem('token');
+            sessionStorage.removeItem('token');
             window.location.replace('/login.html');
         });
 

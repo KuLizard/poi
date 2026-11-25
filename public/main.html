@@ -7,53 +7,32 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/main.css">
-    <link rel="stylesheet" href="/src/output.css">
 </head>
 <body>
 
     <main class="container py-3">
 
         <!-- Filtros de conversaciones -->
-        <div class="barra-superior btn-group w-100 mb-3"
-             role="group"
-             aria-label="Filtrar conversaciones">
+        <div class="barra-superior btn-group w-100 mb-3" role="group" aria-label="Filtrar conversaciones">
 
-            <button id="todos" class="btn btn-success" type="button">
-                Todos
-            </button>
-
-            <button id="grupos" class="btn btn-outline-success" type="button">
-                Grupos
-            </button>
-
-            <button id="sin-leer" class="btn btn-outline-success" type="button">
-                Sin leer
-            </button>
+            <button id="todos" class="btn btn-success" type="button">Todos</button>
+            <button id="grupos" class="btn btn-outline-success" type="button">Grupos</button>
+            <button id="sin-leer" class="btn btn-outline-success" type="button">Sin leer</button>
         </div>
 
         <!-- Usuarios cargados desde MySQL -->
         <section id="todos-div" class="todo list-group">
-            <p class="list-group-item text-muted mb-0">
-                Cargando usuarios...
-            </p>
+            <p class="list-group-item text-muted mb-0">Cargando usuarios...</p>
         </section>
 
         <!-- Chats grupales -->
-        <section id="grupos-div"
-                 class="grupos list-group"
-                 style="display: none;">
-            <p class="list-group-item text-muted mb-0">
-                Todavía no hay grupos cargados.
-            </p>
+        <section id="grupos-div" class="grupos list-group" style="display: none;">
+            <p class="list-group-item text-muted mb-0">Todavía no hay grupos cargados.</p>
         </section>
 
         <!-- Chats con mensajes sin leer -->
-        <section id="sin-leer-div"
-                 class="sin-leer list-group"
-                 style="display: none;">
-            <p class="list-group-item text-muted mb-0">
-                No hay mensajes sin leer.
-            </p>
+        <section id="sin-leer-div" class="sin-leer list-group" style="display: none;">
+            <p class="list-group-item text-muted mb-0">No hay mensajes sin leer.</p>
         </section>
 
     </main>
@@ -62,6 +41,7 @@
     <div id="navbar"></div>
 
     <script src="/js/navbar.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="/js/main.js"></script>
     <script src="/js/guia.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>

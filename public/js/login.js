@@ -28,7 +28,7 @@ formulario.addEventListener('submit', async function (event) {
             return;
         }
 
-        localStorage.setItem('token', resultado.token);
+        sessionStorage.setItem('token', resultado.token);
 
         window.location.href = '/main.html';
 
