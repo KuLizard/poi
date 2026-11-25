@@ -41,9 +41,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 const elemetnoLista = document.createElement("li");
                 elemetnoLista.className = "list-group-item d-flex justify-content-between align-items-center"; 
                 elemetnoLista.innerHTML = `
-                    <span><strong>${lugares.nombre}.</strong> (${lugares.category})
-                        <br>${lugares.location} - ${lugares.service}.</span>
-                    <button class="btn btn-outline-success btn-sm" data-id="${lugares.id}">Enviar a chat</button>
+                    <div class="flex-grow-1 text-start">
+                        <strong>${lugares.nombre}</strong> (${lugares.category})
+                        <br>
+                        ${lugares.location} - ${lugares.service}
+                    </div>
+                    <div class="d-flex gap-2 ms-auto">
+                        <button class="btn btn-outline-success btn-sm enviar" data-id="${lugares.id}">Enviar a chat</button>
+                        <button class="btn btn-outline-success btn-sm borrar" data-id="${lugares.id}">Eliminar</button>
+                    </div>
                 `;
                 listado.appendChild(elemetnoLista);
             });
@@ -51,6 +57,61 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error(error);
         }
     }
+
+    document.getElementById("ubicaciones").addEventListener("click", async (e) => {
+        const elimioamnr = e.target.closest(".borrar");
+        if (!elimioamnr) {
+            return;
+        }
+        try {
+            const res = await fetch(`/regBorrar?registro=${encodeURIComponent(elimioamnr.dataset.id)}`)
+
+            if (res.ok) {
+                window.location.reload();
+            }
+        }  catch (error) {
+            console.error(error);
+        }
+    });
+
+    const formularioRegistrar = document.getElementById("formRegistrar");
+    const nombre = document.getElementById("nombre");
+    const tipo = document.getElementById("tipo");
+    const ubicacion = document.getElementById("ubicaicon");
+    const servicio = document.getElementById("servicio");
+    formularioRegistrar.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const reg1 = nombre.value.trim();
+        const reg2 = ubicacion.value.trim(); 
+        const reg3 = servicio.value.trim(); 
+        if (!reg1 || !reg2 || !reg3) {
+            return;
+        }
+
+        try {
+
+            const res = await fetch("/regGuia", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        nombre: nombre.value,
+                        category: tipo.value,
+                        location: ubicacion.value,
+                        service: servicio.value
+                    })
+            });
+            if (res.ok) {
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+
+
+
+
 });
 
 
