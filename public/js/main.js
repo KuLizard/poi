@@ -5,9 +5,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const todossection = document.getElementById('todos-div');
     const gruposection = document.getElementById('grupos-div');
 
+    const crearGrupoBtn = document.getElementById('crear-grupo');
+    const guardarGrupoBtn = document.getElementById('guardar-grupo');
+
+    const modalCrearGrupo = document.getElementById('modalCrearGrupo');
+    const nombreGrupo = document.getElementById('nombre-grupo');
+    const usuariosGrupo = document.getElementById('usuarios-grupo');
+    const listaGrupos = document.getElementById('lista-grupos');
+    const errorGrupo = document.getElementById('error-grupo');
+
+    const modalGrupo = bootstrap.Modal.getOrCreateInstance(modalCrearGrupo);
+
     const token = sessionStorage.getItem('token');
     let socket = null;
     let usuarioActualId = null;
+    let usuariosDisponibles = [];
 
     const contactosPorId = new Map();
     const vistasPrevias = new Map();
@@ -101,30 +113,177 @@ document.addEventListener('DOMContentLoaded', async () => {
             const resultadoActual = await respuestaActual.json();
             usuarioActualId = Number(resultadoActual.user.id);
 
-            const respuesta = await fetch('http://localhost:3000/api/auth/users');
+            const respuesta = await fetch('http://localhost:3000/api/chat/users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
             if (!respuesta.ok) {
                 throw new Error('No se pudieron cargar los usuarios');
             }
 
-            const usuarios = await respuesta.json();
+            usuariosDisponibles = await respuesta.json();
 
             todossection.replaceChildren();
             contactosPorId.clear();
             vistasPrevias.clear();
 
-            const contactos = usuarios.filter(usuario => Number(usuario.id) !== usuarioActualId);
-
-            contactos.forEach(usuario => {
+            usuariosDisponibles.forEach(usuario => {
                 todossection.appendChild(crearContacto(usuario));
             });
 
-            if (contactos.length === 0) {
+            if (usuariosDisponibles.length === 0) {
                 todossection.textContent = 'Todavía no hay otros usuarios registrados.';
             }
+
+            cargarUsuariosGrupo();
+
         } catch (error) {
             console.error('Error al cargar usuarios:', error);
             todossection.textContent = 'No se pudieron cargar los usuarios. Revisa que el servidor esté funcionando.';
+        }
+    }
+
+    function cargarUsuariosGrupo() {
+        usuariosGrupo.replaceChildren();
+
+        if (usuariosDisponibles.length === 0) {
+            usuariosGrupo.textContent = 'No hay usuarios disponibles.';
+            return;
+        }
+
+        usuariosDisponibles.forEach(usuario => {
+            const etiqueta = document.createElement('label');
+            etiqueta.className = 'list-group-item d-flex align-items-center gap-2';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'form-check-input mt-0';
+            checkbox.value = usuario.id;
+
+            const imagen = document.createElement('img');
+            imagen.src = usuario.image || '/img/GUGR9hoWwAAiXa2.png';
+            imagen.alt = '';
+            imagen.className = 'rounded-circle';
+            imagen.width = 35;
+            imagen.height = 35;
+
+            const nombre = document.createElement('span');
+            nombre.textContent = usuario.username;
+
+            etiqueta.append(checkbox, imagen, nombre);
+            usuariosGrupo.appendChild(etiqueta);
+        });
+    }
+
+    async function cargarGrupos() {
+        try {
+            const respuesta = await fetch('http://localhost:3000/api/chat/groups', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!respuesta.ok) {
+                throw new Error('No se pudieron cargar los grupos');
+            }
+
+            const grupos = await respuesta.json();
+
+            listaGrupos.replaceChildren();
+
+            if (grupos.length === 0) {
+                listaGrupos.textContent = 'Todavía no perteneces a ningún grupo.';
+                listaGrupos.className = 'grupos list-group';
+                return;
+            }
+
+            grupos.forEach(grupo => {
+                const enlace = document.createElement('a');
+                enlace.href = `/chat.html?groupId=${grupo.id}`;
+                enlace.className = 'list-group-item list-group-item-action d-flex align-items-center';
+
+                const icono = document.createElement('i');
+                icono.className = 'bi bi-people-fill fs-4 me-3 text-success';
+
+                const info = document.createElement('div');
+
+                const nombre = document.createElement('strong');
+                nombre.textContent = grupo.nombre;
+
+                const descripcion = document.createElement('p');
+                descripcion.className = 'mb-0 text-muted small';
+                descripcion.textContent = 'Grupo';
+
+                info.append(nombre, descripcion);
+                enlace.append(icono, info);
+                listaGrupos.appendChild(enlace);
+            });
+
+        } catch (error) {
+            console.error('Error al cargar grupos:', error);
+            listaGrupos.textContent = 'No se pudieron cargar los grupos.';
+        }
+    }
+
+    async function guardarGrupo() {
+        errorGrupo.textContent = '';
+
+        const nombre = nombreGrupo.value.trim();
+
+        const participantes = [...usuariosGrupo.querySelectorAll('input:checked')]
+            .map(checkbox => Number(checkbox.value));
+
+        if (!nombre || nombre.length > 100) {
+            errorGrupo.textContent = 'Ingresa un nombre para el grupo.';
+            return;
+        }
+
+        if (participantes.length < 2) {
+            errorGrupo.textContent = 'Selecciona al menos dos participantes.';
+            return;
+        }
+
+        guardarGrupoBtn.disabled = true;
+        guardarGrupoBtn.textContent = 'Creando...';
+
+        try {
+            const respuesta = await fetch('http://localhost:3000/api/chat/groups', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    nombre,
+                    usuarios: participantes
+                })
+            });
+
+            const resultado = await respuesta.json();
+
+            if (!respuesta.ok) {
+                throw new Error(resultado.error || 'No se pudo crear el grupo');
+            }
+
+            nombreGrupo.value = '';
+            errorGrupo.textContent = '';
+
+            usuariosGrupo.querySelectorAll('input:checked').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            modalGrupo.hide();
+
+            await cargarGrupos();
+
+            mostrarSeccion(gruposection, grupobtn);
+
+            console.log('Grupo creado:', resultado.grupo);
+
+        } catch (error) {
+            console.error('Error al crear grupo:', error);
+            errorGrupo.textContent = error.message;
+        } finally {
+            guardarGrupoBtn.disabled = false;
+            guardarGrupoBtn.textContent = 'Crear grupo';
         }
     }
 
@@ -190,12 +349,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    crearGrupoBtn.addEventListener('click', () => {
+        nombreGrupo.value = '';
+        errorGrupo.textContent = '';
+        cargarUsuariosGrupo();
+        modalGrupo.show();
+    });
+
+    guardarGrupoBtn.addEventListener('click', guardarGrupo);
+
     todosbtn.addEventListener('click', () => {
         mostrarSeccion(todossection, todosbtn);
     });
 
     grupobtn.addEventListener('click', () => {
         mostrarSeccion(gruposection, grupobtn);
+        cargarGrupos();
     });
 
     mostrarSeccion(todossection, todosbtn);
@@ -207,4 +376,5 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await cargarUsuarios();
     conectarSocket();
+    await cargarGrupos();
 });

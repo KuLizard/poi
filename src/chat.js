@@ -162,6 +162,121 @@ export function attachChat(server) {
                 }
             });
 
+
+            // Cargar el historial de un grupo.
+            socket.on('group:history', async (payload, ack) => {
+                if (typeof ack !== 'function') return;
+
+                const groupId = Number(payload?.groupId);
+
+                if (!Number.isSafeInteger(groupId) || groupId < 1) {
+                    return ack({ error: 'Grupo no válido.' });
+                }
+
+                try {
+                    const grupo = await Chat.findOne({
+                        where: { id: groupId, tipo: 'grupo' },
+                    });
+
+                    if (!grupo) {
+                        return ack({ error: 'Grupo no encontrado.' });
+                    }
+
+                    const participante = await Participant.findOne({
+                        where: { id_chat: groupId, id_user: userId },
+                    });
+
+                    if (!participante) {
+                        return ack({ error: 'No perteneces a este grupo.' });
+                    }
+
+                    // Unir al usuario a la sala del grupo.
+                    await socket.join(`group:${groupId}`);
+
+                    const historial = await Message.findAll({
+                        where: { id_chat: groupId },
+                        include: [{
+                            model: User,
+                            as: 'sender',
+                            attributes: ['id', 'username', 'image'],
+                        }],
+                        order: [
+                            ['created_at', 'ASC'],
+                            ['id', 'ASC'],
+                        ],
+                    });
+
+                    const resultado = historial.map(mensaje => ({
+                        ...mensaje.toJSON(),
+                        senderId: Number(mensaje.id_user),
+                    }));
+
+                    ack({ messages: resultado });
+
+                } catch (error) {
+                    console.error('Error al cargar historial del grupo:', error);
+                    ack({ error: 'No se pudo cargar el historial del grupo.' });
+                }
+            });
+
+            // Enviar mensajes a un grupo.
+            socket.on('group:send', async (payload, ack) => {
+                if (typeof ack !== 'function') return;
+
+                const groupId = Number(payload?.groupId);
+                const content = typeof payload?.body === 'string' ? payload.body.trim() : '';
+
+                if (!Number.isSafeInteger(groupId) || groupId < 1 || !content || content.length > 2000) {
+                    return ack({ error: 'Selecciona un grupo y escribe entre 1 y 2000 caracteres.' });
+                }
+
+                try {
+                    const grupo = await Chat.findOne({
+                        where: { id: groupId, tipo: 'grupo' },
+                    });
+
+                    if (!grupo) {
+                        return ack({ error: 'Grupo no encontrado.' });
+                    }
+
+                    const participante = await Participant.findOne({
+                        where: { id_chat: groupId, id_user: userId },
+                    });
+
+                    if (!participante) {
+                        return ack({ error: 'No perteneces a este grupo.' });
+                    }
+
+                    const mensajeCreado = await Message.create({
+                        id_chat: groupId,
+                        id_user: userId,
+                        content,
+                    });
+
+                    const mensaje = await Message.findByPk(mensajeCreado.id, {
+                        include: [{
+                            model: User,
+                            as: 'sender',
+                            attributes: ['id', 'username', 'image'],
+                        }],
+                    });
+
+                    const resultado = {
+                        ...mensaje.toJSON(),
+                        senderId: userId,
+                    };
+
+                    // Enviar el mensaje a todos los integrantes conectados.
+                    io.to(`group:${groupId}`).emit('group:message:new', resultado);
+
+                    ack({ message: resultado });
+
+                } catch (error) {
+                    console.error('Unable to save group message:', error);
+                    ack({ error: 'No se pudo guardar el mensaje.' });
+                }
+            });
+
             let windowStart = Date.now();
             let count = 0;
 
@@ -267,6 +382,7 @@ export function attachChat(server) {
                     ack({ error: 'Message could not be saved. Try again.' });
                 }
             });
+
         } catch (error) {
             console.error('Unable to connect chat user:', error);
             socket.disconnect(true);
