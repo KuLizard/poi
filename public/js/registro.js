@@ -2,6 +2,10 @@ const formulario = document.getElementById('form-registro');
 const password = document.getElementById('pass');
 const confirmarPassword = document.getElementById('confirmar-password');
 
+const modalCrearGrupo = document.getElementById('modalCrearGrupo');
+const titulomodal = document.getElementById("titulomodal");
+const modalGrupo = bootstrap.Modal.getOrCreateInstance(modalCrearGrupo);
+
 // Validar que ambas contraseñas coincidan
 function validarPassword() {
     if (confirmarPassword.value !== password.value) {
@@ -37,15 +41,21 @@ formulario.addEventListener('submit', async function (event) {
         console.log('Respuesta del servidor:', resultado);
 
         if (!respuesta.ok) {
-            alert(resultado.error || 'No se pudo completar el registro.');
+            titulomodal.textContent = "No se pudo completar el registro";
+            modalGrupo.show();
+            //alert(resultado.error || 'No se pudo completar el registro.');
             return;
         }
 
-        alert(resultado.mensaje || 'Usuario registrado correctamente.');
+        titulomodal.textContent = "Usuario registrado correctamente";
+        modalGrupo.show();
+        //alert(resultado.mensaje || 'Usuario registrado correctamente.');
         formulario.reset();
 
     } catch (error) {
         console.error('Error al registrar usuario:', error);
-        alert('No se pudo conectar con el servidor.');
+        titulomodal.textContent = "No se pudo conectar con el servidor";
+        modalGrupo.show();
+        //alert('No se pudo conectar con el servidor.');
     }
 });

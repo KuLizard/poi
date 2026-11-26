@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let socket = null;
     let usuarioActualId = null;
+    let usuarioAminis = false;
 
     // Variables de videollamada.
     let peer = null;
@@ -53,6 +54,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     let llamadaIniciada = false;
 
     const mensajesMostrados = new Set();
+
+    const modalCrearGrupo = document.getElementById('modalCrearGrupo');
+    const titulomodal = document.getElementById("titulomodal");
+    const modalGrupo = bootstrap.Modal.getOrCreateInstance(modalCrearGrupo);
+
+    const iamgenesDelasMedallas = {
+        Explorador: '/img/medalla1.png',
+        Amante: '/img/medalla2.png',
+        Aventurero: '/img/medalla3.png',
+        Santiago: '/img/medalla4.png',
+        Sabores: '/img/medalla5.png',
+        Rey: '/img/medalla6.png',
+    };
 
     function actualizarEstado(userId, online) {
         if (Number(userId) !== contactoId) return;
@@ -127,6 +141,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             const nombre = document.createElement('span');
             nombre.textContent = participante.username;
 
+            const medallitas = document.createElement('div');
+            medallitas.className = 'd-flex gap-1';
+            (participante.medallas ?? []).forEach(clave => {
+                if (!iamgenesDelasMedallas[clave]) {
+                    return;
+                }
+
+                const icono = document.createElement('img');
+                icono.src = iamgenesDelasMedallas[clave];
+                icono.alt = clave;
+                icono.title = clave;
+                icono.width = 22;
+                icono.height = 22;
+                medallitas.appendChild(icono);
+            });
+
             const estado = document.createElement('img');
             estado.src = '/img/offline_status.png';
             estado.alt = 'Desconectado';
@@ -135,7 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             estado.dataset.userId = participante.id;
             estado.className = 'ms-auto';
 
-            elemento.append(imagen, nombre, estado);
+            elemento.append(imagen, nombre, medallitas, estado);
             listaParticipantes.appendChild(elemento);
         });
 
@@ -143,6 +173,107 @@ document.addEventListener('DOMContentLoaded', async () => {
             listaParticipantes.textContent = 'Este grupo no tiene participantes.';
         }
     }
+
+
+
+    document.getElementById("formCrearTarea").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const contenido = document.getElementById("titulo")
+
+        if (contenido.value.trim() === "") {
+            return;
+        } else {
+            try {
+                const res = await fetch("/tareaCrear", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify({
+                        content: contenido.value,
+                        user_id: usuarioActualId,
+                        chat_id: grupoId,
+                        estado: "pendiente"
+                    })
+                });
+
+                if (res.ok) {
+                    contenido.value = "";
+                    cargarTareas();
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    })
+    async function cargarTareas() {
+        try {
+            const res = await fetch(`/tareasObtener?chat_id=${encodeURIComponent(grupoId)}`, { headers: { "Authorization": `Bearer ${token}` }});
+            const tareas = await res.json();
+            const listado = document.getElementById("tareaslista");
+            
+            listado.innerHTML = "";
+
+            if (tareas.tarea.length === 0) {
+                const elemetnoLista = document.createElement("li");
+                elemetnoLista.className = "list-group-item d-flex justify-content-between align-items-center"; 
+                elemetnoLista.innerHTML = `
+                    <span><strong>No hay tareas.</strong></span>
+                    `;
+                listado.appendChild(elemetnoLista);
+            } else {
+                tareas.tarea.forEach(tareas => {
+                    const elemetnoLista = document.createElement("li");
+                    elemetnoLista.className = "list-group-item d-flex justify-content-between align-items-center"; 
+                    
+                    const botones = usuarioAminis ? `
+                        <button class="btn btn-outline-success btn-sm completar" data-id="${tareas.id}">Completa</button>
+                        <button class="btn btn-outline-success btn-sm borrar" data-id="${tareas.id}">Eliminar</button>
+                    ` : '';
+                    elemetnoLista.innerHTML = `
+                        <span><strong>${tareas.content}.</strong>
+                            <br>${tareas.estado}.
+                            <br>${tareas.created_at}</span>
+                        ${botones}
+                        `;
+                    listado.appendChild(elemetnoLista);
+                });
+            }
+        }  catch (error) {
+            console.error(error);
+        }
+    }
+    document.getElementById("tareaslista").addEventListener("click", async (e) => {
+        const borrar = e.target.closest(".borrar");
+        if (!borrar) {
+            return;
+        }
+        try {
+            const res = await fetch(`/tareaborrar?tarea=${encodeURIComponent(borrar.dataset.id)}`, { headers: { "Authorization": `Bearer ${token}` }});
+
+            if (res.ok) {
+                cargarTareas();
+            }
+        }  catch (error) {
+            console.error(error);
+        }
+    });
+    document.getElementById("tareaslista").addEventListener("click", async (e) => {
+        const compeltar = e.target.closest(".completar");
+        if (!compeltar) {
+            return;
+        }
+        try {
+            const res = await fetch(`/tareaCompletar?tarea=${encodeURIComponent(compeltar.dataset.id)}`, { headers: { "Authorization": `Bearer ${token}` }});
+
+            if (res.ok) {
+                cargarTareas();
+            }
+        }  catch (error) {
+            console.error(error);
+        }
+    });
+
+
 
     // Obtener cámara y micrófono.
     async function obtenerMedios() {
@@ -434,7 +565,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             fotoUsuario.style.display = 'none';
             estadoUsuario.style.display = 'none';
 
+            usuarioAminis = Number(grupo.usuarioAdmin) === usuarioActualId;
             botonTareas.style.display = 'inline-block';
+            document.querySelector('.registrar').style.display = usuarioAminis ? '' : 'none';
+
+            botonTareas.addEventListener('click', () => {
+                modalGrupo.show();
+                cargarTareas();
+            });
+
             botonParticipantes.style.display = 'inline-block';
             botonVideollamada.style.display = 'none';
 

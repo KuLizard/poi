@@ -7,6 +7,7 @@ import Participant from '../models/Participant.js';
 import sequelize from '../config/database.js';
 
 const router = Router();
+const medalals = ['Explorador', 'Amante', 'Aventurero', 'Santiago', 'Sabores', 'Rey'];
 router.use(authenticate);
 
 // Obtener usuarios disponibles
@@ -49,7 +50,7 @@ router.post('/groups', async (req, res) => {
   }
 
   const grupo = await sequelize.transaction(async transaction => {
-    const nuevoGrupo = await Chat.create({ tipo: 'grupo', nombre }, { transaction });
+    const nuevoGrupo = await Chat.create({ tipo: 'grupo', nombre, usuarioAdmin: req.userId }, { transaction });
 
     await Participant.bulkCreate(
       participantes.map(id => ({ id_chat: nuevoGrupo.id, id_user: id })),
@@ -65,6 +66,7 @@ router.post('/groups', async (req, res) => {
       id: grupo.id,
       nombre: grupo.nombre,
       tipo: grupo.tipo,
+      usuarioAdmin: grupo.usuarioAdmin,
       participantes,
     },
   });
@@ -100,7 +102,7 @@ router.get('/groups/:id', async (req, res) => {
     include: [{
       model: User,
       as: 'participants',
-      attributes: ['id', 'username', 'image'],
+      attributes: ['id', 'username', 'image', 'medallas'],
       through: { attributes: [] },
     }],
   });
@@ -111,5 +113,30 @@ router.get('/groups/:id', async (req, res) => {
 
   return res.json(grupo);
 });
+
+// coas de las medallas 
+router.get('/medallas', async (req, res) => {
+  const usuario = await User.findByPk(req.userId, {attributes:['medallas']});
+  return res.json(usuario?.medallas ?? []);
+});
+
+router.post('/medallas/:clave', async (req, res) => {
+
+  const {clave } = req.params;
+  if (!medalals.includes(clave)) {
+    return res.status(400).json({ error: 'Invalid  medal' });
+  }
+
+  const usuario = await User.findByPk(req.userId);
+  const medallasActualeas = usuario.medallas ?? [];
+
+  if (!medallasActualeas.includes(clave)) {
+    usuario.medallas = [...medallasActualeas, clave];
+    await usuario.save();
+  }
+
+  return res.json(usuario.medallas);
+});
+
 
 export default router;

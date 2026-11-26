@@ -1,54 +1,45 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
-    if (!localStorage.getItem("medallas")) {
-        localStorage.setItem("medallas", JSON.stringify([]));
-    }
 
-    const medallas = JSON.parse(localStorage.getItem("medallas")) || [];
-    if (medallas.includes("Explorador")) {
-        document.getElementById("meda1").classList.replace("medallabloquea", "medallaDESbloquea");
-    }
-    if (medallas.includes("Amante")) {
-        document.getElementById("meda2").classList.replace("medallabloquea", "medallaDESbloquea");
-    }
-    if (medallas.includes("Aventurero")) {
-        document.getElementById("meda3").classList.replace("medallabloquea", "medallaDESbloquea");
-    }
-    if (medallas.includes("Santiago")) {
-        document.getElementById("meda4").classList.replace("medallabloquea", "medallaDESbloquea");
-    }
-    if (medallas.includes("Sabores")) {
-        document.getElementById("meda5").classList.replace("medallabloquea", "medallaDESbloquea");
-    }
-    if (medallas.includes("Rey")) {
-        document.getElementById("meda6").classList.replace("medallabloquea", "medallaDESbloquea");
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+        return; 
     }
 
-    function medalla(lamedalla) {
-        if (!medallas.includes(lamedalla)) {
-            medallas.push(lamedalla);
-            localStorage.setItem("medallas", JSON.stringify(medallas));
-            console.log("Nueva medalla desbloqueada:", lamedalla);
-        }
+    const ids = { Explorador: "meda1", Amante: "meda2", Aventurero: "meda3", Santiago: "meda4", Sabores: "meda5", Rey: "meda6" };
+    let medallas = [];
+
+    async function medalla(lamedalla) {
+        const res = await fetch(`http://localhost:3000/api/chat/medallas/${lamedalla}`, { 
+            method: "POST",
+            headers: {"Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) medallas = await res.json();
     }
 
     const pagina = window.location.pathname;
     if (pagina.includes("guia")) {
-        medalla("Explorador");
+        await medalla("Explorador");
     }
     if (pagina.includes("chat")) {
-        medalla("Amante");
-    }
-    if (pagina.includes("chatgrupal")) {
-        medalla("Aventurero");
+        await medalla("Amante");
     }
     if (pagina.includes("main")) {
-        medalla("Santiago");
+        await medalla("Santiago");
     }
     if (pagina.includes("profile")) {
-        medalla("Sabores");
+        await medalla("Sabores");
     }
     if (pagina.includes("nose")) {
-        medalla("Rey");
+        await medalla("Rey");
     }
+
+    if (medallas.length === 0) {
+        const res = await fetch('http://localhost:3000/api/chat/medallas');
+        if (res.ok) medallas = await res.json();
+    }
+
+    medallas.forEach(clave => {
+        document.getElementById(ids[clave])?.classList.replace("medallabloquea", "medallaDESbloquea");
+    });
 });

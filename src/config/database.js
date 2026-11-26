@@ -1,5 +1,5 @@
 import { Sequelize } from 'sequelize';
-
+/*
 export default new Sequelize(
   process.env.DB_NAME || 'proyectopoi',
   process.env.DB_USER || 'root',
@@ -10,10 +10,10 @@ export default new Sequelize(
     dialect: 'mysql',
     logging: false,
   },
-);
+);*/
 
 //esto es lo mío
-/*export default new Sequelize(
+export default new Sequelize(
   process.env.DB_NAME || 'proyectopoi',
   process.env.DB_USER || 'root',
   process.env.DB_PASSWORD || '4lanZz040A',
@@ -23,4 +23,4 @@ export default new Sequelize(
     dialect: 'mysql',
     logging: false,
   },
-);*/
+);

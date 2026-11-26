@@ -10,6 +10,10 @@ export default sequelize.define('Chat', {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
+  usuarioAdmin: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
 }, {
   tableName: 'chats',
   timestamps: true,
