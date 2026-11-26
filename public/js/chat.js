@@ -25,12 +25,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let socket = null;
     let usuarioActualId = null;
+    let usuarioAminis = false;
 
     const mensajesMostrados = new Set();
 
     const modalCrearGrupo = document.getElementById('modalCrearGrupo');
     const titulomodal = document.getElementById("titulomodal");
     const modalGrupo = bootstrap.Modal.getOrCreateInstance(modalCrearGrupo);
+
+    const iamgenesDelasMedallas = {
+        Explorador: '/img/medalla1.png',
+        Amante: '/img/medalla2.png',
+        Aventurero: '/img/medalla3.png',
+        Santiago: '/img/medalla4.png',
+        Sabores: '/img/medalla5.png',
+        Rey: '/img/medalla6.png',
+    };
 
     function actualizarEstado(userId, online) {
         if (Number(userId) !== contactoId) return;
@@ -105,6 +115,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             const nombre = document.createElement('span');
             nombre.textContent = participante.username;
 
+            const medallitas = document.createElement('div');
+            medallitas.className = 'd-flex gap-1';
+            (participante.medallas ?? []).forEach(clave => {
+                if (!iamgenesDelasMedallas[clave]) {
+                    return;
+                }
+
+                const icono = document.createElement('img');
+                icono.src = iamgenesDelasMedallas[clave];
+                icono.alt = clave;
+                icono.title = clave;
+                icono.width = 22;
+                icono.height = 22;
+                medallitas.appendChild(icono);
+            });
+
             const estado = document.createElement('img');
             estado.src = '/img/offline_status.png';
             estado.alt = 'Desconectado';
@@ -113,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             estado.dataset.userId = participante.id;
             estado.className = 'ms-auto';
 
-            elemento.append(imagen, nombre, estado);
+            elemento.append(imagen, nombre, medallitas, estado);
             listaParticipantes.appendChild(elemento);
         });
 
@@ -172,12 +198,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tareas.tarea.forEach(tareas => {
                     const elemetnoLista = document.createElement("li");
                     elemetnoLista.className = "list-group-item d-flex justify-content-between align-items-center"; 
+                    
+                    const botones = usuarioAminis ? `
+                        <button class="btn btn-outline-success btn-sm completar" data-id="${tareas.id}">Completa</button>
+                        <button class="btn btn-outline-success btn-sm borrar" data-id="${tareas.id}">Eliminar</button>
+                    ` : '';
                     elemetnoLista.innerHTML = `
                         <span><strong>${tareas.content}.</strong>
                             <br>${tareas.estado}.
                             <br>${tareas.created_at}</span>
-                        <button class="btn btn-outline-success btn-sm completar" data-id="${tareas.id}">Completa</button>
-                        <button class="btn btn-outline-success btn-sm borrar" data-id="${tareas.id}">Eliminar</button>
+                        ${botones}
                         `;
                     listado.appendChild(elemetnoLista);
                 });
@@ -262,8 +292,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             fotoUsuario.style.display = 'none';
             estadoUsuario.style.display = 'none';
 
-            const administador = Number(grupo.usuarioAdmin) === usuarioActualId;
-            botonTareas.style.display = administador ? 'inline-block' : 'none';
+            usuarioAminis = Number(grupo.usuarioAdmin) === usuarioActualId;
+            botonTareas.style.display = 'inline-block';
+            document.querySelector('.registrar').style.display = usuarioAminis ? '' : 'none';
 
             botonTareas.addEventListener('click', () => {
                 modalGrupo.show();

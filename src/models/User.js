@@ -22,6 +22,18 @@ export default sequelize.define('User', {
         type: DataTypes.STRING(255),
         allowNull: true,
     },
+    medallas: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        get() {
+            const valor = this.getDataValue('medallas');
+            if (!valor) return [];
+            try { return JSON.parse(valor); } catch { return []; }
+        },
+        set(lista) {
+            this.setDataValue('medallas', JSON.stringify(lista));
+        },
+    }
 }, {
     tableName: 'users',
     timestamps: true,
