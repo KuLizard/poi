@@ -49,7 +49,7 @@ router.post('/groups', async (req, res) => {
   }
 
   const grupo = await sequelize.transaction(async transaction => {
-    const nuevoGrupo = await Chat.create({ tipo: 'grupo', nombre }, { transaction });
+    const nuevoGrupo = await Chat.create({ tipo: 'grupo', nombre, usuarioAdmin: req.userId }, { transaction });
 
     await Participant.bulkCreate(
       participantes.map(id => ({ id_chat: nuevoGrupo.id, id_user: id })),
@@ -65,6 +65,7 @@ router.post('/groups', async (req, res) => {
       id: grupo.id,
       nombre: grupo.nombre,
       tipo: grupo.tipo,
+      usuarioAdmin: grupo.usuarioAdmin,
       participantes,
     },
   });

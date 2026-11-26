@@ -28,6 +28,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const mensajesMostrados = new Set();
 
+    const modalCrearGrupo = document.getElementById('modalCrearGrupo');
+    const titulomodal = document.getElementById("titulomodal");
+    const modalGrupo = bootstrap.Modal.getOrCreateInstance(modalCrearGrupo);
+
     function actualizarEstado(userId, online) {
         if (Number(userId) !== contactoId) return;
 
@@ -118,6 +122,104 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+
+
+    document.getElementById("formCrearTarea").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const contenido = document.getElementById("titulo")
+
+        if (contenido.value.trim() === "") {
+            return;
+        } else {
+            try {
+                const res = await fetch("/tareaCrear", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify({
+                        content: contenido.value,
+                        user_id: usuarioActualId,
+                        chat_id: grupoId,
+                        estado: "pendiente"
+                    })
+                });
+
+                if (res.ok) {
+                    contenido.value = "";
+                    cargarTareas();
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    })
+    async function cargarTareas() {
+        try {
+            const res = await fetch(`/tareasObtener?chat_id=${encodeURIComponent(grupoId)}`, { headers: { "Authorization": `Bearer ${token}` }});
+            const tareas = await res.json();
+            const listado = document.getElementById("tareaslista");
+            
+            listado.innerHTML = "";
+
+            if (tareas.tarea.length === 0) {
+                const elemetnoLista = document.createElement("li");
+                elemetnoLista.className = "list-group-item d-flex justify-content-between align-items-center"; 
+                elemetnoLista.innerHTML = `
+                    <span><strong>No hay tareas.</strong></span>
+                    `;
+                listado.appendChild(elemetnoLista);
+            } else {
+                tareas.tarea.forEach(tareas => {
+                    const elemetnoLista = document.createElement("li");
+                    elemetnoLista.className = "list-group-item d-flex justify-content-between align-items-center"; 
+                    elemetnoLista.innerHTML = `
+                        <span><strong>${tareas.content}.</strong>
+                            <br>${tareas.estado}.
+                            <br>${tareas.created_at}</span>
+                        <button class="btn btn-outline-success btn-sm completar" data-id="${tareas.id}">Completa</button>
+                        <button class="btn btn-outline-success btn-sm borrar" data-id="${tareas.id}">Eliminar</button>
+                        `;
+                    listado.appendChild(elemetnoLista);
+                });
+            }
+        }  catch (error) {
+            console.error(error);
+        }
+    }
+    document.getElementById("tareaslista").addEventListener("click", async (e) => {
+        const borrar = e.target.closest(".borrar");
+        if (!borrar) {
+            return;
+        }
+        try {
+            const res = await fetch(`/tareaborrar?tarea=${encodeURIComponent(borrar.dataset.id)}`, { headers: { "Authorization": `Bearer ${token}` }});
+
+            if (res.ok) {
+                cargarTareas();
+            }
+        }  catch (error) {
+            console.error(error);
+        }
+    });
+    document.getElementById("tareaslista").addEventListener("click", async (e) => {
+        const compeltar = e.target.closest(".completar");
+        if (!compeltar) {
+            return;
+        }
+        try {
+            const res = await fetch(`/tareaCompletar?tarea=${encodeURIComponent(compeltar.dataset.id)}`, { headers: { "Authorization": `Bearer ${token}` }});
+
+            if (res.ok) {
+                cargarTareas();
+            }
+        }  catch (error) {
+            console.error(error);
+        }
+    });
+
+
+
+
     try {
         if (!token) {
             window.location.replace('/login.html');
@@ -160,7 +262,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             fotoUsuario.style.display = 'none';
             estadoUsuario.style.display = 'none';
 
-            botonTareas.style.display = 'inline-block';
+            const administador = Number(grupo.usuarioAdmin) === usuarioActualId;
+            botonTareas.style.display = administador ? 'inline-block' : 'none';
+
+            botonTareas.addEventListener('click', () => {
+                modalGrupo.show();
+                cargarTareas();
+            });
+
             botonParticipantes.style.display = 'inline-block';
             botonVideollamada.style.display = 'none';
 

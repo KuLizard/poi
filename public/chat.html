@@ -65,6 +65,30 @@
         </div>
     </div>
 
+
+    <div class="modal fade" id="modalCrearGrupo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="titulomodal" class="modal-title">Tareas</h5>
+                </div>
+
+                <div class="contenidotareas mb-3">
+                    <ul id="tareaslista" class="list-group list-group-flush">
+                        <!-- aquícargamos las tareas  -->
+                    </ul>
+                </div>
+                <div class="registrar">
+                    <form id="formCrearTarea" class="d-flex gap-2">
+                        <input type="text" id="titulo" name="titulo" class="form-control" placeholder="Escribe una tarea nueva...">
+                        <button type="submit" class="btn btn-success">Publicar</button>
+                    </form>
+                </div> 
+            </div>
+        </div>
+    </div>
+
+
     <!-- Área de mensajes -->
     <main class="chat card mb-3">
         <div id="mensajes" class="card-body" aria-live="polite" aria-label="Mensajes de la conversación">
