@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         ${lugares.location} - ${lugares.service}
                     </div>
                     <div class="d-flex gap-2 ms-auto">
-                        <button class="btn btn-outline-success btn-sm enviar" data-id="${lugares.id}">Enviar a chat</button>
+                        <!-- <button class="btn btn-outline-success btn-sm enviar" data-id="${lugares.id}">Enviar a chat</button> -->
                         <button class="btn btn-outline-success btn-sm borrar" data-id="${lugares.id}">Eliminar</button>
                     </div>
                 `;
