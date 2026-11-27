@@ -18,6 +18,10 @@ const direccions = path.dirname(archivo);
 
 app.use(express.static(path.join(direccions, '../public')));
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(direccions, '../public/login.html'));
+});
+
 // Middlewares
 app.use(cors({
     origin: process.env.FRONTEND_ORIGIN || 'http://localhost'

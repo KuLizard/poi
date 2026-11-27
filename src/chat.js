@@ -5,6 +5,7 @@ import Chat from './models/Chat.js';
 import Participant from './models/Participant.js';
 import Message from './models/Message.js';
 import { verifyToken } from './utils/token.js';
+import { attachVideoCalls } from './videoCalls.js';
 
 export function attachChat(server) {
     const io = new Server(server, {
@@ -33,6 +34,8 @@ export function attachChat(server) {
             next(new Error('Invalid or expired token'));
         }
     });
+
+    attachVideoCalls(io);
 
     io.on('connection', async (socket) => {
         const userId = socket.data.userId;

@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function cargarUsuarios() {
         try {
-            const respuestaActual = await fetch('http://localhost:3000/api/auth/me', {
+            const respuestaActual = await fetch('/api/auth/me', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const resultadoActual = await respuestaActual.json();
             usuarioActualId = Number(resultadoActual.user.id);
 
-            const respuesta = await fetch('http://localhost:3000/api/chat/users', {
+            const respuesta = await fetch('/api/chat/users', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function cargarGrupos() {
         try {
-            const respuesta = await fetch('http://localhost:3000/api/chat/groups', {
+            const respuesta = await fetch('/api/chat/groups', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         guardarGrupoBtn.textContent = 'Creando...';
 
         try {
-            const respuesta = await fetch('http://localhost:3000/api/chat/groups', {
+            const respuesta = await fetch('/api/chat/groups', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function conectarSocket() {
         if (!token) return;
 
-        socket = io('http://localhost:3000', {
+        socket = io({
             auth: { token }
         });
 
