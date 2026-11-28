@@ -16,8 +16,11 @@ export default sequelize.define('Message', {
   },
   content: {
     type: DataTypes.TEXT,
-    allowNull: false,
-    validate: { notEmpty: true },
+    allowNull: true,
+  },
+  image: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
   },
 }, {
   tableName: 'messages',

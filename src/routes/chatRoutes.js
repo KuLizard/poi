@@ -1,3 +1,8 @@
+import multer from 'multer';
+import path from 'node:path';
+import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
+
 import { Router } from 'express';
 import { Op } from 'sequelize';
 import authenticate from '../middleware/authenticate.js';
@@ -9,6 +14,39 @@ import sequelize from '../config/database.js';
 const router = Router();
 const medalals = ['Explorador', 'Amante', 'Aventurero', 'Santiago', 'Sabores', 'Rey'];
 router.use(authenticate);
+
+const carpetaImagenes = path.join(process.cwd(), 'public/uploads/messages');
+
+if (!fs.existsSync(carpetaImagenes)) {
+  fs.mkdirSync(carpetaImagenes, { recursive: true });
+}
+
+const storageImagenes = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, carpetaImagenes),
+  filename: (req, file, cb) => {
+    const extensiones = {
+      'image/jpeg': '.jpg',
+      'image/png': '.png',
+      'image/webp': '.webp',
+    };
+
+    cb(null, `${randomUUID()}${extensiones[file.mimetype]}`);
+  },
+});
+
+const uploadImagen = multer({
+  storage: storageImagenes,
+  fileFilter: (req, file, cb) => {
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+
+    if (tiposPermitidos.includes(file.mimetype)) {
+      return cb(null, true);
+    }
+
+    cb(new Error('Solo se permiten imágenes JPG, PNG o WEBP.'));
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
 
 // Obtener usuarios disponibles
 router.get('/users', async (req, res) => {
@@ -138,5 +176,23 @@ router.post('/medallas/:clave', async (req, res) => {
   return res.json(usuario.medallas);
 });
 
+// Subir imagen para un mensaje
+router.post('/upload-image', (req, res) => {
+  uploadImagen.single('image')(req, res, error => {
+    if (error) {
+      return res.status(400).json({
+        error: error.message || 'No se pudo subir la imagen.',
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Selecciona una imagen.' });
+    }
+
+    return res.status(201).json({
+      image: `/uploads/messages/${req.file.filename}`,
+    });
+  });
+});
 
 export default router;

@@ -228,9 +228,12 @@ export function attachChat(server) {
 
                 const groupId = Number(payload?.groupId);
                 const content = typeof payload?.body === 'string' ? payload.body.trim() : '';
+                const image = typeof payload?.image === 'string' ? payload.image.trim() : '';
 
-                if (!Number.isSafeInteger(groupId) || groupId < 1 || !content || content.length > 2000) {
-                    return ack({ error: 'Selecciona un grupo y escribe entre 1 y 2000 caracteres.' });
+                const imagenValida = !image || /^\/uploads\/messages\/[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(image);
+
+                if (!Number.isSafeInteger(groupId) || groupId < 1 || (!content && !image) || content.length > 2000 || !imagenValida) {
+                    return ack({ error: 'Mensaje o imagen no válido.' });
                 }
 
                 try {
@@ -253,7 +256,8 @@ export function attachChat(server) {
                     const mensajeCreado = await Message.create({
                         id_chat: groupId,
                         id_user: userId,
-                        content,
+                        content: content || null,
+                        image: image || null,
                     });
 
                     const mensaje = await Message.findByPk(mensajeCreado.id, {
@@ -269,7 +273,6 @@ export function attachChat(server) {
                         senderId: userId,
                     };
 
-                    // Enviar el mensaje a todos los integrantes conectados.
                     io.to(`group:${groupId}`).emit('group:message:new', resultado);
 
                     ack({ message: resultado });
@@ -282,6 +285,7 @@ export function attachChat(server) {
 
             let windowStart = Date.now();
             let count = 0;
+
 
             socket.on('message:send', async (payload, ack) => {
                 if (typeof ack !== 'function') return;
@@ -296,14 +300,13 @@ export function attachChat(server) {
                 }
 
                 const recipientId = payload?.recipientId;
-                const content = typeof payload?.body === 'string'
-                    ? payload.body.trim()
-                    : '';
+                const content = typeof payload?.body === 'string' ? payload.body.trim() : '';
+                const image = typeof payload?.image === 'string' ? payload.image.trim() : '';
 
-                if (!Number.isSafeInteger(recipientId) || recipientId < 1 || recipientId === userId || !content || content.length > 2000) {
-                    return ack({
-                        error: 'Choose another user and enter 1 to 2000 characters.',
-                    });
+                const imagenValida = !image || /^\/uploads\/messages\/[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(image);
+
+                if (!Number.isSafeInteger(recipientId) || recipientId < 1 || recipientId === userId || (!content && !image) || content.length > 2000 || !imagenValida) {
+                    return ack({ error: 'Choose another user and enter a valid message or image.' });
                 }
 
                 try {
@@ -315,7 +318,6 @@ export function attachChat(server) {
                         return ack({ error: 'User not found' });
                     }
 
-                    // Buscar chats en los que participa cada usuario.
                     const [userChats, recipientChats] = await Promise.all([
                         Participant.findAll({
                             where: { id_user: userId },
@@ -335,7 +337,6 @@ export function attachChat(server) {
                         .map((participant) => participant.id_chat)
                         .filter((id) => recipientChatIds.has(id));
 
-                    // Encontrar la conversación privada compartida.
                     let chat = null;
 
                     if (sharedChatIds.length > 0) {
@@ -347,7 +348,6 @@ export function attachChat(server) {
                         });
                     }
 
-                    // Si no existe, crear la conversación y sus participantes.
                     if (!chat) {
                         chat = await Chat.create({
                             tipo: 'privada',
@@ -360,12 +360,12 @@ export function attachChat(server) {
                         ]);
                     }
 
-                    // Guardar usando las columnas reales de messages.
                     const message = (
                         await Message.create({
                             id_chat: chat.id,
                             id_user: userId,
-                            content,
+                            content: content || null,
+                            image: image || null,
                         })
                     ).toJSON();
 
@@ -375,11 +375,11 @@ export function attachChat(server) {
                         recipientId,
                     };
 
-                    // Entregar el mensaje a ambos usuarios en tiempo real.
                     io.to([`user:${userId}`, `user:${recipientId}`])
                         .emit('message:new', result);
 
                     ack({ message: result });
+
                 } catch (error) {
                     console.error('Unable to save chat message:', error);
                     ack({ error: 'Message could not be saved. Try again.' });

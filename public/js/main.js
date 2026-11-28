@@ -53,7 +53,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const remitenteId = Number(mensaje.senderId ?? mensaje.id_user);
         const remitente = remitenteId === usuarioActualId ? 'Tú' : contacto.username;
 
-        vistaPrevia.textContent = `${remitente}: ${mensaje.content}`;
+        const contenido = mensaje.content?.trim() || (mensaje.image ? 'Imagen' : '');
+
+        vistaPrevia.textContent = `${remitente}: ${contenido}`;
     }
 
     function crearContacto(usuario) {

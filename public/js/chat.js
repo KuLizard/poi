@@ -15,8 +15,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalParticipantes = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalParticipantes'));
 
     const botonAdjuntar = document.getElementById('btn-adjuntar');
+    const archivoImagen = document.getElementById('archivo-imagen');
 
-    // Elementos de videollamada.
     const modalVideollamada = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalVideollamada'));
     const tituloVideollamada = document.getElementById('tituloVideollamada');
     const videoRemoto = document.getElementById('video-remoto');
@@ -68,6 +68,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         Rey: '/img/medalla6.png',
     };
 
+    // Seleccionar imagen.
+    botonAdjuntar.addEventListener('click', () => {
+        archivoImagen.click();
+    });
+
+    archivoImagen.addEventListener('change', () => {
+        botonAdjuntar.textContent = archivoImagen.files.length
+            ? archivoImagen.files[0].name
+            : 'Adjuntar imagen';
+    });
+
+    // Subir imagen al servidor.
+    async function subirImagen() {
+        if (!archivoImagen.files.length) return null;
+
+        const formularioImagen = new FormData();
+        formularioImagen.append('image', archivoImagen.files[0]);
+
+        const respuesta = await fetch('/api/chat/upload-image', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formularioImagen
+        });
+
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+            throw new Error(resultado.error || 'No se pudo subir la imagen.');
+        }
+
+        return resultado.image;
+    }
+
+    // Mostrar imagen en un mensaje.
+    function mostrarImagen(contenedor, ruta) {
+        if (!ruta) return;
+
+        const imagen = document.createElement('img');
+        imagen.src = ruta;
+        imagen.alt = 'Imagen enviada';
+        imagen.className = 'img-fluid rounded mt-2';
+        imagen.style.maxWidth = '250px';
+
+        contenedor.appendChild(imagen);
+    }
+
     function actualizarEstado(userId, online) {
         if (Number(userId) !== contactoId) return;
 
@@ -94,9 +140,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (mensaje.id) mensajesMostrados.add(mensaje.id);
 
-        const parrafo = document.createElement('p');
+        const parrafo = document.createElement('div');
         parrafo.classList.add(remitenteId === usuarioActualId ? 'mensaje-enviado' : 'mensaje-recibido');
-        parrafo.textContent = mensaje.content;
+
+        if (mensaje.content) {
+            const contenido = document.createElement('p');
+            contenido.textContent = mensaje.content;
+            parrafo.appendChild(contenido);
+        }
+
+        mostrarImagen(parrafo, mensaje.image);
 
         mensajes.appendChild(parrafo);
         mensajes.scrollTop = mensajes.scrollHeight;
@@ -116,10 +169,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         nombreRemitente.className = 'd-block small mb-1';
         nombreRemitente.textContent = remitenteId === usuarioActualId ? 'Tú' : mensaje.sender?.username || 'Usuario';
 
-        const contenido = document.createElement('span');
-        contenido.textContent = mensaje.content;
+        contenedor.appendChild(nombreRemitente);
 
-        contenedor.append(nombreRemitente, contenido);
+        if (mensaje.content) {
+            const contenido = document.createElement('span');
+            contenido.textContent = mensaje.content;
+            contenedor.appendChild(contenido);
+        }
+
+        mostrarImagen(contenedor, mensaje.image);
+
         mensajes.appendChild(contenedor);
         mensajes.scrollTop = mensajes.scrollHeight;
     }
@@ -174,12 +233,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-
-
     document.getElementById("formCrearTarea").addEventListener("submit", async function (e) {
         e.preventDefault();
 
-        const contenido = document.getElementById("titulo")
+        const contenido = document.getElementById("titulo");
 
         if (contenido.value.trim() === "") {
             return;
@@ -204,76 +261,84 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error(error);
             }
         }
-    })
+    });
+
     async function cargarTareas() {
         try {
-            const res = await fetch(`/tareasObtener?chat_id=${encodeURIComponent(grupoId)}`, { headers: { "Authorization": `Bearer ${token}` }});
+            const res = await fetch(`/tareasObtener?chat_id=${encodeURIComponent(grupoId)}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
             const tareas = await res.json();
             const listado = document.getElementById("tareaslista");
-            
+
             listado.innerHTML = "";
 
             if (tareas.tarea.length === 0) {
                 const elemetnoLista = document.createElement("li");
-                elemetnoLista.className = "list-group-item d-flex justify-content-between align-items-center"; 
+                elemetnoLista.className = "list-group-item d-flex justify-content-between align-items-center";
                 elemetnoLista.innerHTML = `
                     <span><strong>No hay tareas.</strong></span>
-                    `;
+                `;
                 listado.appendChild(elemetnoLista);
             } else {
                 tareas.tarea.forEach(tareas => {
                     const elemetnoLista = document.createElement("li");
-                    elemetnoLista.className = "list-group-item d-flex justify-content-between align-items-center"; 
-                    
+                    elemetnoLista.className = "list-group-item d-flex justify-content-between align-items-center";
+
                     const botones = usuarioAminis ? `
                         <button class="btn btn-outline-success btn-sm completar" data-id="${tareas.id}">Completa</button>
                         <button class="btn btn-outline-success btn-sm borrar" data-id="${tareas.id}">Eliminar</button>
                     ` : '';
+
                     elemetnoLista.innerHTML = `
                         <span><strong>${tareas.content}.</strong>
                             <br>${tareas.estado}.
                             <br>${tareas.created_at}</span>
                         ${botones}
-                        `;
+                    `;
+
                     listado.appendChild(elemetnoLista);
                 });
             }
-        }  catch (error) {
+        } catch (error) {
             console.error(error);
         }
     }
+
     document.getElementById("tareaslista").addEventListener("click", async (e) => {
         const borrar = e.target.closest(".borrar");
-        if (!borrar) {
-            return;
-        }
+        if (!borrar) return;
+
         try {
-            const res = await fetch(`/tareaborrar?tarea=${encodeURIComponent(borrar.dataset.id)}`, { headers: { "Authorization": `Bearer ${token}` }});
+            const res = await fetch(`/tareaborrar?tarea=${encodeURIComponent(borrar.dataset.id)}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
 
             if (res.ok) {
                 cargarTareas();
             }
-        }  catch (error) {
+        } catch (error) {
             console.error(error);
         }
     });
+
     document.getElementById("tareaslista").addEventListener("click", async (e) => {
         const compeltar = e.target.closest(".completar");
-        if (!compeltar) {
-            return;
-        }
+        if (!compeltar) return;
+
         try {
-            const res = await fetch(`/tareaCompletar?tarea=${encodeURIComponent(compeltar.dataset.id)}`, { headers: { "Authorization": `Bearer ${token}` }});
+            const res = await fetch(`/tareaCompletar?tarea=${encodeURIComponent(compeltar.dataset.id)}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
 
             if (res.ok) {
                 cargarTareas();
             }
-        }  catch (error) {
+        } catch (error) {
             console.error(error);
         }
     });
-
-
 
     // Obtener cámara y micrófono.
     async function obtenerMedios() {
@@ -287,6 +352,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             audio: true,
             video: true
         });
+
+        console.log('Micrófonos:', await navigator.mediaDevices.enumerateDevices());
+
+        console.log('Pistas de audio:', streamLocal.getAudioTracks().map(pista => ({
+            nombre: pista.label,
+            activa: pista.enabled,
+            estado: pista.readyState
+        })));
 
         videoLocal.srcObject = streamLocal;
 
@@ -426,7 +499,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             modalVideollamada.show();
 
-            socket.timeout(5000).emit('call:invite', { callId: callIdActual, recipientId: contactoId }, (error, respuesta) => {
+            socket.timeout(5000).emit('call:invite', {
+                callId: callIdActual,
+                recipientId: contactoId
+            }, (error, respuesta) => {
                 if (error || respuesta?.error) {
                     alert(respuesta?.error || 'No se pudo enviar la invitación.');
                     limpiarVideollamada();
@@ -626,12 +702,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('Desconectado del grupo:', motivo);
             });
 
-            formulario.addEventListener('submit', evento => {
+            // Enviar mensajes e imágenes al grupo.
+            formulario.addEventListener('submit', async evento => {
                 evento.preventDefault();
 
                 const contenido = inputMensaje.value.trim();
 
-                if (!contenido) return;
+                if (!contenido && !archivoImagen.files.length) return;
 
                 if (!socket || !socket.connected) {
                     alert('No hay conexión con el servidor del chat.');
@@ -639,26 +716,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 botonEnviar.disabled = true;
+                botonAdjuntar.disabled = true;
 
-                socket.timeout(5000).emit('group:send', { groupId: grupoId, body: contenido }, (error, respuesta) => {
+                try {
+                    const imagen = await subirImagen();
+
+                    socket.timeout(5000).emit('group:send', {
+                        groupId: grupoId,
+                        body: contenido,
+                        image: imagen
+                    }, (error, respuesta) => {
+                        botonEnviar.disabled = false;
+                        botonAdjuntar.disabled = false;
+
+                        if (error) {
+                            alert('El servidor no respondió. Intenta de nuevo.');
+                            return;
+                        }
+
+                        if (respuesta?.error) {
+                            alert(respuesta.error);
+                            return;
+                        }
+
+                        inputMensaje.value = '';
+                        archivoImagen.value = '';
+                        botonAdjuntar.textContent = 'Adjuntar imagen';
+                        inputMensaje.focus();
+                    });
+                } catch (error) {
                     botonEnviar.disabled = false;
-
-                    if (error) {
-                        alert('El servidor no respondió. Intenta de nuevo.');
-                        return;
-                    }
-
-                    if (respuesta?.error) {
-                        alert(respuesta.error);
-                        return;
-                    }
-
-                    inputMensaje.value = '';
-                    inputMensaje.focus();
-                });
+                    botonAdjuntar.disabled = false;
+                    alert(error.message);
+                }
             });
-
-            botonAdjuntar.disabled = true;
 
             return;
         }
@@ -793,12 +884,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         botonVideollamada.addEventListener('click', iniciarVideollamada);
 
-        formulario.addEventListener('submit', evento => {
+        // Enviar mensajes e imágenes privados.
+        formulario.addEventListener('submit', async evento => {
             evento.preventDefault();
 
             const contenido = inputMensaje.value.trim();
 
-            if (!contenido) return;
+            if (!contenido && !archivoImagen.files.length) return;
 
             if (!socket || !socket.connected) {
                 alert('No hay conexión con el servidor del chat.');
@@ -806,23 +898,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             botonEnviar.disabled = true;
+            botonAdjuntar.disabled = true;
 
-            socket.timeout(5000).emit('message:send', { recipientId: contactoId, body: contenido }, (error, respuesta) => {
+            try {
+                const imagen = await subirImagen();
+
+                socket.timeout(5000).emit('message:send', {
+                    recipientId: contactoId,
+                    body: contenido,
+                    image: imagen
+                }, (error, respuesta) => {
+                    botonEnviar.disabled = false;
+                    botonAdjuntar.disabled = false;
+
+                    if (error) {
+                        alert('El servidor no respondió. Intenta de nuevo.');
+                        return;
+                    }
+
+                    if (respuesta?.error) {
+                        alert(respuesta.error);
+                        return;
+                    }
+
+                    inputMensaje.value = '';
+                    archivoImagen.value = '';
+                    botonAdjuntar.textContent = 'Adjuntar imagen';
+                    inputMensaje.focus();
+                });
+            } catch (error) {
                 botonEnviar.disabled = false;
-
-                if (error) {
-                    alert('El servidor no respondió. Intenta de nuevo.');
-                    return;
-                }
-
-                if (respuesta?.error) {
-                    alert(respuesta.error);
-                    return;
-                }
-
-                inputMensaje.value = '';
-                inputMensaje.focus();
-            });
+                botonAdjuntar.disabled = false;
+                alert(error.message);
+            }
         });
 
     } catch (error) {
